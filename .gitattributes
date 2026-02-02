@@ -1,0 +1,3 @@
+# Exclude test initialization scripts with embedded test keys from security scanning
+examples/vault-init.sh linguist-generated=true
+examples/openbao-init.sh linguist-generated=true
