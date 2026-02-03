@@ -45,9 +45,31 @@ type ExternalSecret struct {
 
 // ConvertConfig holds conversion parameters
 type ConvertConfig struct {
-	MountPath string
-	KVVersion string
-	OutputDir string
+	MountPath      string
+	KVVersion      string
+	OutputDir      string
+	AutoDetectMount bool
+}
+
+// detectMountPath tries to infer mount path from secret key
+func detectMountPath(key string) string {
+	parts := strings.Split(key, "/")
+	if len(parts) == 0 {
+		return "secret"
+	}
+
+	// Common patterns
+	firstSegment := parts[0]
+	switch firstSegment {
+	case "common":
+		return "devops"
+	case "artifactory":
+		return "artifactory"
+	case "infra":
+		return "infra"
+	default:
+		return "secret"
+	}
 }
 
 func convertExternalSecret(inputFile string, cfg ConvertConfig) error {
@@ -76,14 +98,29 @@ func convertExternalSecret(inputFile string, cfg ConvertConfig) error {
 		refreshInterval = "30m"
 	}
 
+	// Determine mount path
+	mountPath := cfg.MountPath
+	var key string
+
+	// Handle dataFrom.extract (pulls all fields)
+	if len(es.Spec.DataFrom) > 0 {
+		key = es.Spec.DataFrom[0].Extract.Key
+	} else if len(es.Spec.Data) > 0 {
+		key = es.Spec.Data[0].RemoteRef.Key
+	}
+
+	// Auto-detect mount path if enabled
+	if cfg.AutoDetectMount && key != "" {
+		mountPath = detectMountPath(key)
+	}
+
 	fmt.Printf("\n# Converted from: %s\n", filepath.Base(inputFile))
 	fmt.Printf("  - name: %q\n", secretName)
 
 	// Handle dataFrom.extract (pulls all fields)
 	if len(es.Spec.DataFrom) > 0 {
-		key := es.Spec.DataFrom[0].Extract.Key
 		fmt.Printf("    key: %q\n", key)
-		fmt.Printf("    mountPath: %q\n", cfg.MountPath)
+		fmt.Printf("    mountPath: %q\n", mountPath)
 		fmt.Printf("    kvVersion: %q\n", cfg.KVVersion)
 		fmt.Printf("    refreshInterval: %q\n", refreshInterval)
 		fmt.Printf("    # Note: Uses dataFrom.extract - pulls ALL fields from secret\n")
@@ -116,9 +153,8 @@ func convertExternalSecret(inputFile string, cfg ConvertConfig) error {
 
 	// Handle data[] (specific fields)
 	if len(es.Spec.Data) > 0 {
-		key := es.Spec.Data[0].RemoteRef.Key
 		fmt.Printf("    key: %q\n", key)
-		fmt.Printf("    mountPath: %q\n", cfg.MountPath)
+		fmt.Printf("    mountPath: %q\n", mountPath)
 		fmt.Printf("    kvVersion: %q\n", cfg.KVVersion)
 		fmt.Printf("    refreshInterval: %q\n", refreshInterval)
 		fmt.Printf("    template:\n")
@@ -156,9 +192,10 @@ func runConvert(args []string) int {
 	}
 
 	cfg := ConvertConfig{
-		MountPath: "secret",
-		KVVersion: "v2",
-		OutputDir: "./secrets",
+		MountPath:      "secret",
+		KVVersion:      "v2",
+		OutputDir:      "./secrets",
+		AutoDetectMount: true, // Enable by default
 	}
 
 	var files []string
@@ -168,6 +205,7 @@ func runConvert(args []string) int {
 		case "--mount-path":
 			if i+1 < len(args) {
 				cfg.MountPath = args[i+1]
+				cfg.AutoDetectMount = false // Disable auto-detect if explicitly set
 				i++
 			}
 		case "--kv-version":
