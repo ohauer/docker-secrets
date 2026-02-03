@@ -34,9 +34,11 @@ log_message "Creating test secrets..."
 docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" openbao-dev \
     bao kv put secret/common/tls/example-cert \
     tlsCrt="-----BEGIN CERTIFICATE-----
-MIICxjCCAa4CCQD1234567890" \
+MIICxjCCAa4CCQD1234567890
+-----END CERTIFICATE-----" \
     tlsKey="-----BEGIN PRIVATE KEY-----
-MIIEvQIBADANBgkqhkiG9w0B"
+MIIEvQIBADANBgkqhkiG9w0B
+-----END PRIVATE KEY-----"
 
 docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" openbao-dev \
     bao kv put secret/database/prod/credentials \
