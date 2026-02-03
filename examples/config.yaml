@@ -5,18 +5,26 @@ secretStore:
   kvVersion: "v2"
   mountPath: "secret"
 
+# Each secret defines:
+# 1. template.data - Map of keys to template expressions
+# 2. files - List of output files
+# The mapping is positional: data keys are written to files in order
+#   - First key in template.data -> First file in files list
+#   - Second key in template.data -> Second file in files list
+#   - etc.
+
 secrets:
   - name: "tls-cert"
     path: "common/tls/example-cert"
     refreshInterval: "30m"
     template:
       data:
-        tls.crt: '{{ .tlsCrt }}'
-        tls.key: '{{ .tlsKey }}'
+        tls.crt: '{{ .tlsCrt }}'    # -> .work/secrets/tls.crt
+        tls.key: '{{ .tlsKey }}'    # -> .work/secrets/tls.key
     files:
-      - path: "/tmp/secrets/tls.crt"
+      - path: ".work/secrets/tls.crt"
         mode: "0644"
-      - path: "/tmp/secrets/tls.key"
+      - path: ".work/secrets/tls.key"
         mode: "0600"
 
   - name: "database-creds"
@@ -24,12 +32,12 @@ secrets:
     refreshInterval: "5m"
     template:
       data:
-        username: '{{ .username }}'
-        password: '{{ .password }}'
+        username: '{{ .username }}'  # -> .work/secrets/db-username
+        password: '{{ .password }}'  # -> .work/secrets/db-password
     files:
-      - path: "/tmp/secrets/db-username"
+      - path: ".work/secrets/db-username"
         mode: "0600"
-      - path: "/tmp/secrets/db-password"
+      - path: ".work/secrets/db-password"
         mode: "0600"
 
   - name: "api-keys"
@@ -37,10 +45,10 @@ secrets:
     refreshInterval: "1h"
     template:
       data:
-        api_key: '{{ .apiKey }}'
-        api_secret: '{{ .apiSecret }}'
+        api_key: '{{ .apiKey }}'       # -> .work/secrets/api-key
+        api_secret: '{{ .apiSecret }}' # -> .work/secrets/api-secret
     files:
-      - path: "/tmp/secrets/api-key"
+      - path: ".work/secrets/api-key"
         mode: "0600"
-      - path: "/tmp/secrets/api-secret"
+      - path: ".work/secrets/api-secret"
         mode: "0600"

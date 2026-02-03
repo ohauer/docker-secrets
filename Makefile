@@ -1,4 +1,4 @@
-.PHONY: all build test lint clean
+.PHONY: help all build test lint clean
 
 BINARY_NAME=secrets-sync
 BUILD_DIR=bin
@@ -9,6 +9,24 @@ VERSION=0.1.0
 GIT_COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "dev")
 BUILD_DATE=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
 LDFLAGS=-ldflags "-X main.Version=$(VERSION) -X main.GitCommit=$(GIT_COMMIT) -X main.BuildDate=$(BUILD_DATE)"
+
+.DEFAULT_GOAL := help
+
+help:
+	@echo "Available targets:"
+	@echo "  all           - Run lint, test, and build"
+	@echo "  build         - Build the binary"
+	@echo "  build-static  - Build static binary for container"
+	@echo "  test          - Run tests"
+	@echo "  coverage      - Generate coverage report"
+	@echo "  lint          - Run linter"
+	@echo "  fmt           - Format code"
+	@echo "  vet           - Run go vet"
+	@echo "  clean         - Remove build artifacts"
+	@echo "  run           - Run the application"
+	@echo "  docker-build  - Build Docker image"
+	@echo "  docker-run    - Run Docker container"
+	@echo "  docker-test   - Test Docker container"
 
 all: lint test build
 
@@ -53,19 +71,3 @@ docker-run:
 docker-test:
 	docker build -t docker-secrets:test .
 	docker run --rm docker-secrets:test isready; echo "Exit code: $$?"
-
-help:
-	@echo "Available targets:"
-	@echo "  all           - Run lint, test, and build"
-	@echo "  build         - Build the binary"
-	@echo "  build-static  - Build static binary for container"
-	@echo "  test          - Run tests"
-	@echo "  coverage      - Generate coverage report"
-	@echo "  lint          - Run linter"
-	@echo "  fmt           - Format code"
-	@echo "  vet           - Run go vet"
-	@echo "  clean         - Remove build artifacts"
-	@echo "  run           - Run the application"
-	@echo "  docker-build  - Build Docker image"
-	@echo "  docker-run    - Run Docker container"
-	@echo "  docker-test   - Test Docker container"

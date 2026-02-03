@@ -35,6 +35,12 @@ secretStore:
   # tlsClientCert: "/certs/client.pem"     # Client certificate (mTLS)
   # tlsClientKey: "/certs/client-key.pem"  # Client key (mTLS)
 
+# Secret Configuration
+# Each secret maps template.data keys to files by position:
+#   - First key in template.data -> First file in files list
+#   - Second key in template.data -> Second file in files list
+# The key names are just labels; actual file paths come from the files list.
+
 secrets:
   # Example: TLS certificate
   - name: "tls-cert"
@@ -42,8 +48,8 @@ secrets:
     refreshInterval: "30m"
     template:
       data:
-        tls.crt: '{{ .tlsCrt }}'
-        tls.key: '{{ .tlsKey }}'
+        tls.crt: '{{ .tlsCrt }}'   # -> /secrets/tls.crt
+        tls.key: '{{ .tlsKey }}'   # -> /secrets/tls.key
     files:
       - path: "/secrets/tls.crt"
         mode: "0644"
@@ -56,8 +62,8 @@ secrets:
     refreshInterval: "1h"
     template:
       data:
-        username: '{{ .username }}'
-        password: '{{ .password }}'
+        username: '{{ .username }}'  # -> /secrets/db-username
+        password: '{{ .password }}'  # -> /secrets/db-password
     files:
       - path: "/secrets/db-username"
         mode: "0600"
@@ -70,8 +76,8 @@ secrets:
     refreshInterval: "2h"
     template:
       data:
-        apiKey: '{{ .apiKey }}'
-        apiSecret: '{{ .apiSecret }}'
+        apiKey: '{{ .apiKey }}'       # -> /secrets/api-key
+        apiSecret: '{{ .apiSecret }}' # -> /secrets/api-secret
     files:
       - path: "/secrets/api-key"
         mode: "0600"

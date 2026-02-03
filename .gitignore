@@ -31,5 +31,9 @@ Thumbs.db
 # Test run directory
 test-run/
 
+# Working directories (generated files)
+examples/.work/
+.work/
+
 # Project status (local only)
 PROJECT_STATUS.md

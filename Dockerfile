@@ -13,9 +13,9 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build static binary
+# Build static binary with stripped symbols
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
-    -a -ldflags '-extldflags "-static"' \
+    -a -ldflags '-s -w -extldflags "-static"' \
     -o secrets-sync ./cmd/secrets-sync
 
 # Final stage

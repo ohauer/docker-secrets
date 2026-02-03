@@ -1,45 +1,65 @@
 #!/bin/sh
-set -e
+# Initialize OpenBao with test secrets
+# Run from examples directory: ./openbao-init.sh
 
-echo "Waiting for OpenBao to be ready..."
-sleep 2
+set -eu
 
-echo "Enabling KV v2 secrets engine..."
-bao secrets enable -version=2 -path=secret kv || echo "KV engine already enabled"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+WORK_DIR="${SCRIPT_DIR}/.work"
 
-echo "Creating test secrets..."
+log_message() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') openbao-init - $1"
+}
 
-# TLS certificate example
-bao kv put secret/common/tls/example-cert \
+# Create working directory
+mkdir -p "${WORK_DIR}"
+
+log_message "Starting OpenBao container..."
+cd "${PROJECT_ROOT}"
+docker compose -f docker-compose.openbao.yml up -d openbao 2>/dev/null || true
+
+log_message "Waiting for OpenBao to be ready..."
+sleep 5
+
+BAO_ADDR="http://localhost:8300"
+BAO_TOKEN="dev-root-token"
+
+log_message "Enabling KV v2 secrets engine..."
+docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" openbao-dev \
+    bao secrets enable -version=2 -path=secret kv 2>/dev/null || log_message "KV engine already enabled"
+
+log_message "Creating test secrets..."
+
+docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" openbao-dev \
+    bao kv put secret/common/tls/example-cert \
     tlsCrt="-----BEGIN CERTIFICATE-----
-MIICljCCAX4CCQCKz8Zr8vJKZDANBgkqhkiG9w0BAQsFADANMQswCQYDVQQGEwJV
-UzAeFw0yNjAyMDEwMDAwMDBaFw0yNzAyMDEwMDAwMDBaMA0xCzAJBgNVBAYTAlVT
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0Z8Z8Z8Z8Z8Z8Z8Z8Z8Z
------END CERTIFICATE-----" \
+MIICxjCCAa4CCQD1234567890" \
     tlsKey="-----BEGIN PRIVATE KEY-----
-MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDRnxnxnxnxnxnx
------END PRIVATE KEY-----"
+MIIEvQIBADANBgkqhkiG9w0B"
 
-# Database credentials example
-bao kv put secret/database/prod/credentials \
+docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" openbao-dev \
+    bao kv put secret/database/prod/credentials \
     username="dbuser" \
     password="dbpass123"
 
-# Application config example
-bao kv put secret/app/config \
-    apiKey="test-api-key-12345" \
-    apiSecret="test-api-secret-67890"
+docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" openbao-dev \
+    bao kv put secret/app/config \
+    apiKey="api-key-12345" \
+    apiSecret="api-secret-67890"
 
-echo "Creating AppRole auth..."
-bao auth enable approle || echo "AppRole already enabled"
+log_message "Creating AppRole auth..."
+docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" openbao-dev \
+    bao auth enable approle 2>/dev/null || log_message "AppRole already enabled"
 
-bao write auth/approle/role/secrets-sync \
+docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" openbao-dev \
+    bao write auth/approle/role/secrets-sync \
     token_ttl=1h \
     token_max_ttl=4h \
     policies=secrets-sync-policy
 
-# Create policy for secrets-sync
-bao policy write secrets-sync-policy - <<EOF
+log_message "Creating policy..."
+cat > "${WORK_DIR}/policy.hcl" <<EOF
 path "secret/data/*" {
   capabilities = ["read", "list"]
 }
@@ -48,23 +68,41 @@ path "secret/metadata/*" {
 }
 EOF
 
-# Get RoleID and SecretID
-ROLE_ID=$(bao read -field=role_id auth/approle/role/secrets-sync/role-id)
-SECRET_ID=$(bao write -field=secret_id -f auth/approle/role/secrets-sync/secret-id)
+docker cp "${WORK_DIR}/policy.hcl" openbao-dev:/tmp/policy.hcl
+docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" openbao-dev \
+    bao policy write secrets-sync-policy /tmp/policy.hcl
 
-echo ""
-echo "=========================================="
-echo "OpenBao initialized successfully!"
-echo "=========================================="
-echo "OpenBao Address: http://localhost:8200"
-echo "Root Token: dev-root-token"
-echo ""
-echo "AppRole Credentials:"
-echo "  Role ID:   $ROLE_ID"
-echo "  Secret ID: $SECRET_ID"
-echo ""
-echo "Test secrets created:"
-echo "  - secret/common/tls/example-cert (tlsCrt, tlsKey)"
-echo "  - secret/database/prod/credentials (username, password)"
-echo "  - secret/app/config (apiKey, apiSecret)"
-echo "=========================================="
+ROLE_ID=$(docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" openbao-dev \
+    bao read -field=role_id auth/approle/role/secrets-sync/role-id)
+SECRET_ID=$(docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" openbao-dev \
+    bao write -field=secret_id -f auth/approle/role/secrets-sync/secret-id)
+
+# Save credentials to working directory
+cat > "${WORK_DIR}/openbao-credentials.txt" <<EOF
+OpenBao Address: ${BAO_ADDR}
+Root Token: ${BAO_TOKEN}
+
+AppRole Credentials:
+  Role ID:   ${ROLE_ID}
+  Secret ID: ${SECRET_ID}
+
+Test secrets created:
+  - secret/common/tls/example-cert (tlsCrt, tlsKey)
+  - secret/database/prod/credentials (username, password)
+  - secret/app/config (apiKey, apiSecret)
+EOF
+
+log_message "=========================================="
+log_message "OpenBao initialized successfully!"
+log_message "=========================================="
+log_message "OpenBao Address: ${BAO_ADDR}"
+log_message "Root Token: ${BAO_TOKEN}"
+log_message ""
+log_message "AppRole Credentials:"
+log_message "  Role ID:   ${ROLE_ID}"
+log_message "  Secret ID: ${SECRET_ID}"
+log_message ""
+log_message "Credentials saved to: ${WORK_DIR}/openbao-credentials.txt"
+log_message ""
+log_message "To stop OpenBao:"
+log_message "  docker compose -f ../docker-compose.openbao.yml down"

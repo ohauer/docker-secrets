@@ -1,66 +1,135 @@
-# Development Environment
+# Examples
 
-This directory contains docker-compose configurations and scripts for local development and testing.
+This directory contains example configurations and scripts for testing docker-secrets.
 
-## Vault Development Environment
+## Quick Start
 
-Start Vault in development mode with test data:
+### Option 1: Standalone Testing
 
-```bash
-docker-compose -f docker-compose.vault.yml up -d
-```
-
-This will:
-- Start Vault in dev mode on http://localhost:8200
-- Create test secrets (TLS certs, database credentials, app config)
-- Configure AppRole authentication
-- Display credentials in the logs
-
-View initialization output:
-```bash
-docker logs vault-init
-```
-
-Access Vault:
-- **URL**: http://localhost:8200
-- **Root Token**: `dev-root-token`
-
-Stop Vault:
-```bash
-docker-compose -f docker-compose.vault.yml down
-```
-
-## OpenBao Development Environment
-
-Start OpenBao in development mode with test data:
+Test the tool directly with Vault:
 
 ```bash
-docker-compose -f docker-compose.openbao.yml up -d
+# 1. Build the binary
+make build -C ..
+
+# 2. Initialize Vault with test secrets
+cd examples
+./vault-init.sh
+
+# 3. Run secrets-sync
+mkdir -p .work/secrets
+CONFIG_FILE=config.yaml ../bin/secrets-sync
+
+# 4. Verify secrets (in another terminal)
+ls -la .work/secrets/
+cat .work/secrets/db-username
 ```
 
-This will:
-- Start OpenBao in dev mode on http://localhost:8200
-- Create test secrets (TLS certs, database credentials, app config)
-- Configure AppRole authentication
-- Display credentials in the logs
+### Option 2: Docker Sidecar Pattern
 
-View initialization output:
+Run the complete sidecar example with docker-compose:
+
 ```bash
-docker logs openbao-init
+# 1. Build docker image
+make docker-build -C ..
+
+# 2. Start the sidecar example
+docker compose -f docker-compose.sidecar.yml up
+
+# This starts:
+# - Vault (on port 8202)
+# - Secrets sidecar (syncs secrets)
+# - Nginx app (uses synced secrets)
 ```
 
-Access OpenBao:
-- **URL**: http://localhost:8200
-- **Root Token**: `dev-root-token`
+Note: The sidecar example includes its own Vault instance and needs to be initialized separately. See "Sidecar Example Setup" below.
 
-Stop OpenBao:
+## Working Directory
+
+All generated files are stored in `examples/.work/`:
+- `.work/secrets/` - Synced secret files
+- `.work/vault-credentials.txt` - Vault credentials
+- `.work/openbao-credentials.txt` - OpenBao credentials
+
+This directory is gitignored to keep the repository clean.
+
+## Files
+
+### Scripts
+
+- `vault-init.sh` - Initialize Vault (port 8200) with test secrets
+- `openbao-init.sh` - Initialize OpenBao (port 8300) with test secrets
+- `test-examples-vault.sh` - End-to-end test with Vault
+- `test-examples-openbao.sh` - End-to-end test with OpenBao
+
+### Configuration
+
+- `config.yaml` - Example configuration for secrets-sync
+- `docker-compose.sidecar.yml` - Sidecar pattern example
+
+## Sidecar Example Setup
+
+The docker-compose.sidecar.yml includes its own Vault instance on port 8202. To use it:
+
 ```bash
-docker-compose -f docker-compose.openbao.yml down
+# Start services
+docker compose -f docker-compose.sidecar.yml up -d
+
+# Initialize Vault in the sidecar
+docker exec -e VAULT_ADDR=http://127.0.0.1:8200 -e VAULT_TOKEN=dev-root-token vault-sidecar \
+  vault kv put secret/common/tls/example-cert tlsCrt="cert-data" tlsKey="key-data"
+
+docker exec -e VAULT_ADDR=http://127.0.0.1:8200 -e VAULT_TOKEN=dev-root-token vault-sidecar \
+  vault kv put secret/database/prod/credentials username="dbuser" password="dbpass123"
+
+docker exec -e VAULT_ADDR=http://127.0.0.1:8200 -e VAULT_TOKEN=dev-root-token vault-sidecar \
+  vault kv put secret/app/config apiKey="api-key" apiSecret="api-secret"
+
+# Restart sidecar to sync secrets
+docker compose -f docker-compose.sidecar.yml restart secrets-sidecar
+
+# Check logs
+docker logs -f secrets-sidecar
 ```
+
+## OpenBao Alternative
+
+To use OpenBao instead of Vault:
+
+```bash
+./openbao-init.sh
+```
+
+OpenBao runs on port 8300 (to avoid conflicts with Vault on 8200). You'll need to create a separate config file or use the test script:
+
+```bash
+# Run the OpenBao test (creates config automatically)
+./test-examples-openbao.sh
+```
+
+## Automated Testing
+
+Two test scripts are provided to verify the complete workflow:
+
+```bash
+# Test with Vault (port 8200)
+./test-examples-vault.sh
+
+# Test with OpenBao (port 8300)
+./test-examples-openbao.sh
+```
+
+These scripts:
+- Start the secret backend
+- Initialize with test secrets
+- Build the binary
+- Run secrets-sync
+- Verify synced secrets
+- Clean up automatically
 
 ## Test Secrets
 
-Both environments create the following test secrets:
+Both Vault and OpenBao are initialized with:
 
 ### TLS Certificate
 - **Path**: `secret/common/tls/example-cert`
@@ -74,62 +143,46 @@ Both environments create the following test secrets:
 - **Path**: `secret/app/config`
 - **Fields**: `apiKey`, `apiSecret`
 
-## Authentication Methods
+## Authentication
 
-### Token Authentication
-Use the root token for testing:
-```bash
-export VAULT_TOKEN=dev-root-token
-# or
-export BAO_TOKEN=dev-root-token
+### Token Authentication (Default)
+```yaml
+secretStore:
+  authMethod: "token"
+  token: "dev-root-token"
 ```
 
 ### AppRole Authentication
-Get credentials from the init container logs:
-```bash
-docker logs vault-init | grep -A 2 "AppRole Credentials"
-# or
-docker logs openbao-init | grep -A 2 "AppRole Credentials"
-```
-
-## Testing the Secrets Sync Tool
-
-Example configuration for testing with Vault:
+Get credentials from `.work/vault-credentials.txt` or `.work/openbao-credentials.txt`:
 
 ```yaml
-# testdata/dev-config.yaml
 secretStore:
-  address: "http://localhost:8200"
-  authMethod: "token"
-  token: "dev-root-token"
-  kvVersion: "v2"
-  mountPath: "secret"
-
-secrets:
-  - name: "tls-cert"
-    path: "common/tls/example-cert"
-    refreshInterval: "30s"
-    template:
-      data:
-        tls.crt: '{{ .tlsCrt }}'
-        tls.key: '{{ .tlsKey }}'
-    files:
-      - path: "/tmp/secrets/tls.crt"
-        mode: "0644"
-      - path: "/tmp/secrets/tls.key"
-        mode: "0600"
+  authMethod: "approle"
+  roleId: "${VAULT_ROLE_ID}"
+  secretId: "${VAULT_SECRET_ID}"
 ```
 
-Run the tool:
+## Cleanup
+
 ```bash
-CONFIG_FILE=testdata/dev-config.yaml go run ./cmd/secrets-sync
+# Stop sidecar example
+docker compose -f ../docker-compose.sidecar.yml down
+
+# Stop Vault
+docker compose -f ../docker-compose.vault.yml down
+
+# Stop OpenBao
+docker compose -f ../docker-compose.openbao.yml down
+
+# Remove working directory
+rm -rf ./.work
 ```
 
 ## Notes
 
-⚠️ **WARNING**: These are development environments only. Never use dev mode or these tokens in production!
+⚠️ **WARNING**: These are development examples only. Never use dev mode or these tokens in production!
 
 - Dev mode stores data in memory (lost on restart)
 - Root tokens have unlimited access
-- TLS is disabled
-- Audit logging is disabled
+- TLS is disabled in these examples
+- Secrets are stored in plaintext files

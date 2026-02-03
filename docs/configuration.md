@@ -134,6 +134,26 @@ template:
     connection: 'postgresql://{{ .username }}:{{ .password }}@localhost/db'
 ```
 
+**Important:** The keys in `template.data` are mapped to files **by position**:
+- First key in `template.data` → First file in `files` list
+- Second key in `template.data` → Second file in `files` list
+- And so on...
+
+Example:
+```yaml
+template:
+  data:
+    username: '{{ .username }}'  # Written to first file
+    password: '{{ .password }}'  # Written to second file
+files:
+  - path: "/secrets/db-username"  # Receives 'username' value
+    mode: "0600"
+  - path: "/secrets/db-password"  # Receives 'password' value
+    mode: "0600"
+```
+
+The key names in `template.data` are not used for file naming - they're just labels. The actual file paths come from the `files` list.
+
 ### File Configuration
 
 Each file entry supports:
