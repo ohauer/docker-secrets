@@ -133,3 +133,112 @@ func TestExpandEnvVars(t *testing.T) {
 		t.Errorf("expected token 'my-token', got: %s", cfg.SecretStore.Token)
 	}
 }
+
+func TestValidate_KVVersion(t *testing.T) {
+	tests := []struct {
+		name      string
+		kvVersion string
+		wantErr   bool
+	}{
+		{
+			name:      "valid v1",
+			kvVersion: "v1",
+			wantErr:   false,
+		},
+		{
+			name:      "valid v2",
+			kvVersion: "v2",
+			wantErr:   false,
+		},
+		{
+			name:      "invalid version",
+			kvVersion: "v3",
+			wantErr:   true,
+		},
+		{
+			name:      "empty version",
+			kvVersion: "",
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &Config{
+				SecretStore: SecretStore{
+					Address:    "https://vault.example.com",
+					AuthMethod: "token",
+					Token:      "test",
+				},
+				Secrets: []Secret{
+					{
+						Name:            "test",
+						Key:             "test/path",
+						MountPath:       "secret",
+						KVVersion:       tt.kvVersion,
+						RefreshInterval: 5 * time.Minute,
+						Template:        Template{Data: map[string]string{"key": "value"}},
+						Files:           []File{{Path: "/test"}},
+					},
+				},
+			}
+
+			err := Validate(cfg)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidate_MissingMountPath(t *testing.T) {
+	cfg := &Config{
+		SecretStore: SecretStore{
+			Address:    "https://vault.example.com",
+			AuthMethod: "token",
+			Token:      "test",
+		},
+		Secrets: []Secret{
+			{
+				Name:            "test",
+				Key:             "test/path",
+				MountPath:       "",
+				KVVersion:       "v2",
+				RefreshInterval: 5 * time.Minute,
+				Template:        Template{Data: map[string]string{"key": "value"}},
+				Files:           []File{{Path: "/test"}},
+			},
+		},
+	}
+
+	err := Validate(cfg)
+	if err == nil {
+		t.Fatal("expected error for missing mountPath, got nil")
+	}
+}
+
+func TestValidate_MissingKey(t *testing.T) {
+	cfg := &Config{
+		SecretStore: SecretStore{
+			Address:    "https://vault.example.com",
+			AuthMethod: "token",
+			Token:      "test",
+		},
+		Secrets: []Secret{
+			{
+				Name:            "test",
+				Key:             "",
+				MountPath:       "secret",
+				KVVersion:       "v2",
+				RefreshInterval: 5 * time.Minute,
+				Template:        Template{Data: map[string]string{"key": "value"}},
+				Files:           []File{{Path: "/test"}},
+			},
+		},
+	}
+
+	err := Validate(cfg)
+	if err == nil {
+		t.Fatal("expected error for missing key, got nil")
+	}
+}

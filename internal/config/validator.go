@@ -50,17 +50,6 @@ func validateSecretStore(store *SecretStore) error {
 		return fmt.Errorf("unsupported authMethod: %s (supported: token, approle)", store.AuthMethod)
 	}
 
-	if store.KVVersion == "" {
-		store.KVVersion = "v2"
-	}
-	if store.KVVersion != "v2" {
-		return fmt.Errorf("only kvVersion v2 is supported")
-	}
-
-	if store.MountPath == "" {
-		store.MountPath = "secret"
-	}
-
 	// Validate TLS configuration
 	if store.TLSCACert != "" {
 		if _, err := os.Stat(store.TLSCACert); os.IsNotExist(err) {
@@ -104,8 +93,20 @@ func validateSecret(secret *Secret) error {
 		return fmt.Errorf("name is required")
 	}
 
-	if secret.Path == "" {
-		return fmt.Errorf("path is required")
+	if secret.Key == "" {
+		return fmt.Errorf("key is required")
+	}
+
+	if secret.MountPath == "" {
+		return fmt.Errorf("mountPath is required")
+	}
+
+	if secret.KVVersion == "" {
+		return fmt.Errorf("kvVersion is required")
+	}
+
+	if secret.KVVersion != "v1" && secret.KVVersion != "v2" {
+		return fmt.Errorf("kvVersion must be v1 or v2, got: %s", secret.KVVersion)
 	}
 
 	if secret.RefreshInterval <= 0 {
