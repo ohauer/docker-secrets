@@ -3,6 +3,7 @@ package template
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"text/template"
 )
 
@@ -20,7 +21,10 @@ func NewEngine() *Engine {
 
 // AddTemplate adds a template with the given name
 func (e *Engine) AddTemplate(name, tmpl string) error {
-	t, err := template.New(name).Parse(tmpl)
+	// Sanitize template name - Go templates don't allow hyphens in names
+	// Use the name as-is for lookup, but sanitize for template.New()
+	safeName := strings.ReplaceAll(name, "-", "_")
+	t, err := template.New(safeName).Parse(tmpl)
 	if err != nil {
 		return fmt.Errorf("failed to parse template %s: %w", name, err)
 	}
