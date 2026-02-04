@@ -226,69 +226,81 @@ func convertSingleSecret(es ExternalSecret, sourceFile string, cfg ConvertConfig
 	}
 
 	fmt.Printf("\n# Converted from: %s (secret: %s)\n", sourceFile, secretName)
-	fmt.Printf("  - name: %q\n", secretName)
-
+	
 	// Handle dataFrom.extract (pulls all fields)
 	if len(es.Spec.DataFrom) > 0 {
-		fmt.Printf("    key: %q\n", key)
-		fmt.Printf("    mountPath: %q\n", mountPath)
-		fmt.Printf("    kvVersion: %q\n", cfg.KVVersion)
-		fmt.Printf("    refreshInterval: %q\n", refreshInterval)
-
 		// Try to query vault for actual field names
 		var fields []string
+		queryFailed := false
 		if cfg.QueryVault {
 			queriedFields, err := queryVaultFields(mountPath, key, cfg.VaultAddr, cfg.VaultToken)
 			if err == nil && len(queriedFields) > 0 {
 				fields = queriedFields
-				fmt.Printf("    # Fields queried from Vault\n")
 			} else {
 				fmt.Fprintf(os.Stderr, "Warning: Failed to query %s/%s: %v\n", mountPath, key, err)
-				fmt.Printf("    # WARNING: Failed to query Vault (permission denied?), using fallback\n")
+				queryFailed = true
 			}
 		}
 
-		fmt.Printf("    template:\n")
-		fmt.Printf("      data:\n")
+		// Comment out the entire secret if query failed and no template provided
+		commentPrefix := ""
+		if queryFailed && len(es.Spec.Target.Template.Data) == 0 {
+			commentPrefix = "# "
+			fmt.Printf("# WARNING: Vault query failed - secret commented out, needs manual field mapping\n")
+		}
+
+		fmt.Printf("%s  - name: %q\n", commentPrefix, secretName)
+
+		fmt.Printf("%s    key: %q\n", commentPrefix, key)
+		fmt.Printf("%s    mountPath: %q\n", commentPrefix, mountPath)
+		fmt.Printf("%s    kvVersion: %q\n", commentPrefix, cfg.KVVersion)
+		fmt.Printf("%s    refreshInterval: %q\n", commentPrefix, refreshInterval)
+
+		if len(fields) > 0 {
+			fmt.Printf("    # Fields queried from Vault\n")
+		}
+
+		fmt.Printf("%s    template:\n", commentPrefix)
+		fmt.Printf("%s      data:\n", commentPrefix)
 
 		// Use template if provided in external-secret
 		if len(es.Spec.Target.Template.Data) > 0 {
 			for k, v := range es.Spec.Target.Template.Data {
-				fmt.Printf("        %s: %q\n", k, v)
+				fmt.Printf("%s        %s: %q\n", commentPrefix, k, v)
 			}
 		} else if len(fields) > 0 {
 			// Use queried fields from Vault
 			for _, field := range fields {
-				fmt.Printf("        %s: '{{ .%s }}'\n", field, field)
+				fmt.Printf("%s        %s: '{{ .%s }}'\n", commentPrefix, field, field)
 			}
 		} else {
-			// Fallback: output all fields as JSON
-			fmt.Printf("        # Fallback: outputs all fields as JSON (no vault access)\n")
-			fmt.Printf("        data.json: '{{ . | toJson }}'\n")
+			// Fallback: commented out placeholder
+			fmt.Printf("%s        # TODO: Add field mappings, e.g.: username: '{{ .username }}'\n", commentPrefix)
 		}
 
-		fmt.Printf("    files:\n")
+		fmt.Printf("%s    files:\n", commentPrefix)
 		if len(es.Spec.Target.Template.Data) > 0 {
 			for k := range es.Spec.Target.Template.Data {
-				fmt.Printf("      - path: %q\n", filepath.Join(cfg.OutputDir, secretName, k))
-				fmt.Printf("        mode: \"0600\"\n")
+				fmt.Printf("%s      - path: %q\n", commentPrefix, filepath.Join(cfg.OutputDir, secretName, k))
+				fmt.Printf("%s        mode: \"0600\"\n", commentPrefix)
 			}
 		} else if len(fields) > 0 {
 			// Create one file per field
 			for _, field := range fields {
-				fmt.Printf("      - path: %q\n", filepath.Join(cfg.OutputDir, secretName, field))
-				fmt.Printf("        mode: \"0600\"\n")
+				fmt.Printf("%s      - path: %q\n", commentPrefix, filepath.Join(cfg.OutputDir, secretName, field))
+				fmt.Printf("%s        mode: \"0600\"\n", commentPrefix)
 			}
 		} else {
-			// Fallback: single JSON file
-			fmt.Printf("      - path: %q\n", filepath.Join(cfg.OutputDir, secretName, "data.json"))
-			fmt.Printf("        mode: \"0600\"\n")
+			// Fallback: commented out placeholder
+			fmt.Printf("%s      - path: %q\n", commentPrefix, filepath.Join(cfg.OutputDir, secretName, "field1"))
+			fmt.Printf("%s        mode: \"0600\"\n", commentPrefix)
 		}
 		return nil
 	}
 
 	// Handle data[] (specific fields)
 	if len(es.Spec.Data) > 0 {
+		fmt.Printf("  - name: %q\n", secretName)
 		fmt.Printf("    key: %q\n", key)
 		fmt.Printf("    mountPath: %q\n", mountPath)
 		fmt.Printf("    kvVersion: %q\n", cfg.KVVersion)
