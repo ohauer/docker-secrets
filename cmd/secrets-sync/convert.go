@@ -117,23 +117,11 @@ func queryVaultFields(mountPath, key, vaultAddr, vaultToken string) ([]string, e
 
 // detectMountPath tries to infer mount path from secret key
 func detectMountPath(key string) string {
-	parts := strings.Split(key, "/")
-	if len(parts) == 0 {
-		return "secret"
-	}
-
-	// Common patterns
-	firstSegment := parts[0]
-	switch firstSegment {
-	case "common":
-		return "devops"
-	case "artifactory":
-		return "artifactory"
-	case "infra":
-		return "infra"
-	default:
-		return "secret"
-	}
+	// All keys are relative to the mount path specified in the SecretStore
+	// For vault-devops SecretStore, the mount is "devops"
+	// Keys like "artifactory/internal/..." are paths within the devops mount
+	// So we should NOT auto-detect based on the key prefix
+	return "devops"
 }
 
 func convertExternalSecret(inputFile string, cfg ConvertConfig) error {
