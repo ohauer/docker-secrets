@@ -73,14 +73,93 @@ make docker-build
 
 ## Usage
 
-### Command Line
+### Command Line Interface
+
+The tool provides several commands for different use cases:
+
+#### Run the Service
 
 ```bash
 # Run with config file
 CONFIG_FILE=config.yaml ./secrets-sync
 
-# Check readiness
+# Run with environment variables
+export VAULT_ADDR=https://vault.example.com:8443
+export VAULT_ROLE_ID=your-role-id
+export VAULT_SECRET_ID=your-secret-id
+CONFIG_FILE=config.yaml ./secrets-sync
+```
+
+#### Generate Sample Configuration
+
+```bash
+# Generate a sample config.yaml with all options
+./secrets-sync init > config.yaml
+```
+
+#### Validate Configuration
+
+```bash
+# Validate config file without running
+./secrets-sync validate
+CONFIG_FILE=custom-config.yaml ./secrets-sync validate
+```
+
+#### Check Version
+
+```bash
+# Show version information
+./secrets-sync version
+```
+
+#### Health Check
+
+```bash
+# Check if service is ready (for scripts/monitoring)
 ./secrets-sync isready
+```
+
+#### Convert from external-secrets-operator
+
+Convert ExternalSecret resources to docker-secrets format:
+
+```bash
+# Basic conversion (uses fallback for unknown fields)
+./secrets-sync convert external-secret.yaml > config.yaml
+
+# Query Vault for actual field names (recommended)
+export VAULT_ADDR=https://vault.example.com:8443
+export VAULT_TOKEN=your-token
+./secrets-sync convert external-secret.yaml --query-vault > config.yaml
+
+# Use AppRole authentication for querying
+export VAULT_ADDR=https://vault.example.com:8443
+export VAULT_ROLE_ID=your-role-id
+export VAULT_SECRET_ID=your-secret-id
+./secrets-sync convert external-secret.yaml --query-vault > config.yaml
+
+# Convert multiple files
+./secrets-sync convert file1.yaml file2.yaml --query-vault > config.yaml
+
+# Specify mount path manually
+./secrets-sync convert external-secret.yaml --mount-path devops > config.yaml
+```
+
+The convert command:
+- Supports single ExternalSecret, Kubernetes List, and multi-document YAML formats
+- Auto-detects mount paths from secret keys
+- Queries Vault for actual field names when `--query-vault` is used
+- Generates complete config including secretStore section
+- Comments out secrets that fail to query (permission denied)
+- Handles special characters in field names (hyphens, dots)
+
+#### Show Help
+
+```bash
+# Show all available commands
+./secrets-sync help
+./secrets-sync --help
+./secrets-sync -h
 ```
 
 ### Docker Compose Sidecar Pattern
