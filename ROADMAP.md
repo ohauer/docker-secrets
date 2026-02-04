@@ -154,21 +154,33 @@ Create a production-ready, secure, and lightweight sidecar container for managin
 
 ## Long-term Roadmap (Post v1.0.0)
 
-### v1.1.0 - Enhanced Secret Support
-**Estimated**: Q2 2026
+### v1.1.0 - Enhanced Secret Support ✅ COMPLETED (2026-02-04)
+**Status**: Released
 
-**Features**:
-- Vault KV v1 engine support
-- Dynamic secrets support (database credentials)
-- Secret rotation hooks (execute command on change)
-- Binary secret support (non-text files)
+**Features**: ✅ ALL IMPLEMENTED
+- ✅ Vault KV v1 engine support (per-secret kvVersion configuration)
+- ✅ Per-secret mount path configuration
+- ✅ Convert command for external-secrets-operator migration
+- ✅ Vault query for automatic field detection
+- ✅ AppRole authentication in convert command
+- ✅ Support for special characters in field names (hyphens, dots)
+- [ ] Dynamic secrets support (database credentials) - Deferred to v1.2.0
+- [ ] Secret rotation hooks (execute command on change) - Deferred to v1.2.0
+- [ ] Binary secret support (non-text files) - Deferred to v1.2.0
+
+**Breaking Changes**:
+- Configuration structure changed: `kvVersion` and `mountPath` moved from `secretStore` to per-secret configuration
+- Field `path` renamed to `key` in secret configuration
 
 ---
 
-### v1.2.0 - Multi-Backend Support
-**Estimated**: Q3 2026
+### v1.2.0 - Multi-Backend and Dynamic Secrets
+**Estimated**: Q2 2026
 
 **Features**:
+- Dynamic secrets support (database credentials)
+- Secret rotation hooks (execute command on change)
+- Binary secret support (non-text files)
 - AWS Secrets Manager backend
 - Azure Key Vault backend
 - Google Secret Manager backend
@@ -177,7 +189,7 @@ Create a production-ready, secure, and lightweight sidecar container for managin
 ---
 
 ### v1.3.0 - Advanced Features
-**Estimated**: Q4 2026
+**Estimated**: Q3 2026
 
 **Features**:
 - Secret caching with encryption at rest
@@ -315,5 +327,5 @@ Create a production-ready, secure, and lightweight sidecar container for managin
 
 This roadmap is a living document and will be updated as the project evolves.
 
-**Last Updated**: 2026-02-01
-**Next Review**: 2026-02-08
+**Last Updated**: 2026-02-04
+**Next Review**: 2026-02-11
