@@ -31,10 +31,11 @@ This will:
 2. Create `secrets-sync` system user and group
 3. Install to `/usr/local/bin/secrets-sync`
 4. Create config directory `/etc/secrets-sync`
-5. Create `/secrets` directory (default output path)
-6. Generate sample config
-7. Install systemd unit file
-8. Enable the service
+5. Generate sample config
+6. Install systemd unit file
+7. Enable the service
+
+**Important**: You must manually create output directories before starting the service.
 
 ### Manual Installation
 
@@ -67,13 +68,44 @@ secrets:
         db_password: '{{ .db_password }}'
         api_key: '{{ .api_key }}'
     files:
-      - path: "/var/lib/secrets-sync/db_password"
+      - path: "/var/secrets/db_password"
         mode: "0600"
-      - path: "/var/lib/secrets-sync/api_key"
+      - path: "/var/secrets/api_key"
         mode: "0600"
 ```
 
-### 2. Set Environment Variables
+### 2. Create Output Directories
+
+**Important**: Create directories before starting the service:
+
+```bash
+# Create directory for secrets
+sudo mkdir -p /var/secrets
+
+# Set ownership to secrets-sync user
+sudo chown secrets-sync:secrets-sync /var/secrets
+
+# Set permissions (750 = owner+group can access)
+sudo chmod 750 /var/secrets
+```
+
+### 3. Update Systemd Unit File
+
+Edit `/etc/systemd/system/secrets-sync.service` and add your output paths:
+
+```ini
+# Filesystem protection
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/secrets
+```
+
+Reload systemd after editing:
+```bash
+sudo systemctl daemon-reload
+```
+
+### 4. Set Environment Variables
 
 ```bash
 sudo nano /etc/default/secrets-sync
@@ -108,9 +140,18 @@ IPAddressAllow=192.168.1.100
 **File Paths**:
 ```ini
 # Add paths where secrets will be written
-ReadWritePaths=/secrets
+# These directories must exist and be owned by secrets-sync user
+ReadWritePaths=/var/secrets
 ReadWritePaths=/app/secrets
 ReadWritePaths=/etc/nginx/ssl
+```
+
+Create directories first:
+```bash
+sudo mkdir -p /var/secrets /app/secrets /etc/nginx/ssl
+sudo chown secrets-sync:secrets-sync /var/secrets /app/secrets
+sudo chown secrets-sync:nginx /etc/nginx/ssl
+sudo chmod 750 /var/secrets /app/secrets /etc/nginx/ssl
 ```
 
 **Sharing Secrets with Other Services**:
@@ -376,12 +417,14 @@ If you need to recreate it manually:
 sudo useradd -r -s /bin/false -d /nonexistent -c "Secrets Sync Service" secrets-sync
 ```
 
-Create secret directories:
+Create output directories (example):
 ```bash
-sudo mkdir -p /secrets
-sudo chown secrets-sync:secrets-sync /secrets
-sudo chmod 750 /secrets
+sudo mkdir -p /var/secrets
+sudo chown secrets-sync:secrets-sync /var/secrets
+sudo chmod 750 /var/secrets
 ```
+
+**Important**: The service will fail to start if output directories don't exist or aren't writable by the secrets-sync user. This is intentional - you must explicitly create and configure the directories you want to use.
 
 ### Multiple Instances
 

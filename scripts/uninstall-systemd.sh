@@ -126,7 +126,8 @@ main() {
 
     log_message "Uninstallation complete!"
     log_message ""
-    log_message "Note: /secrets directory was not removed (may contain data)"
+    log_message "Note: Output directories (e.g., /var/secrets) were not removed"
+    log_message "      Remove them manually if no longer needed"
 }
 
 main "$@"

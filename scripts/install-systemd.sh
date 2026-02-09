@@ -66,19 +66,6 @@ create_user() {
     fi
 }
 
-create_secrets_dir() {
-    if [ ! -d "/secrets" ]; then
-        log_message "Creating /secrets directory"
-        mkdir -p /secrets
-        chown secrets-sync:secrets-sync /secrets
-        chmod 750 /secrets
-        log_message "Directory /secrets created (adjust path in config if needed)"
-    else
-        log_message "Directory /secrets already exists"
-        log_message "WARNING: Ensure secrets-sync user has write access to /secrets"
-    fi
-}
-
 install_env_file() {
     if [ ! -f "${ENV_FILE_DEST}" ]; then
         log_message "Installing environment file to ${ENV_FILE_DEST}"
@@ -152,7 +139,6 @@ main() {
     create_user
     install_binary
     create_config_dir
-    create_secrets_dir
     install_unit_file
     install_env_file
     generate_config
@@ -164,15 +150,18 @@ main() {
     log_message "Installation complete!"
     log_message ""
     log_message "Next steps:"
-    log_message "  1. Edit configuration: ${CONFIG_DIR}/config.yaml"
-    log_message "  2. Edit environment:   ${ENV_FILE_DEST}"
-    log_message "  3. Adjust ReadWritePaths in ${UNIT_FILE_DEST} if needed"
-    log_message "  4. Start service:      systemctl start secrets-sync"
-    log_message "  5. Check status:       systemctl status secrets-sync"
-    log_message "  6. View logs:          journalctl -u secrets-sync -f"
-    log_message "  7. Read manual:        man secrets-sync"
+    log_message "  1. Create output directories for secrets (e.g., mkdir -p /var/secrets)"
+    log_message "  2. Set ownership: chown secrets-sync:secrets-sync /var/secrets"
+    log_message "  3. Edit configuration: ${CONFIG_DIR}/config.yaml"
+    log_message "  4. Edit environment:   ${ENV_FILE_DEST}"
+    log_message "  5. Update ReadWritePaths in ${UNIT_FILE_DEST} to match your paths"
+    log_message "  6. Reload systemd:     systemctl daemon-reload"
+    log_message "  7. Start service:      systemctl start secrets-sync"
+    log_message "  8. Check status:       systemctl status secrets-sync"
+    log_message "  9. View logs:          journalctl -u secrets-sync -f"
+    log_message " 10. Read manual:        man secrets-sync"
     log_message ""
-    log_message "Note: To allow other services to read secrets, add their users to the secrets-sync group:"
+    log_message "To allow other services to read secrets, add their users to the secrets-sync group:"
     log_message "      usermod -a -G secrets-sync <username>"
 }
 
