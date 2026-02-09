@@ -194,7 +194,7 @@ curl http://localhost:8080/metrics
 
 ### Integration with Monitoring Systems
 
-The service exposes Prometheus metrics on port 8080 (configurable via `HTTP_PORT`):
+The service exposes Prometheus metrics on port 8080 (configurable via `METRICS_PORT`):
 
 ```bash
 # Add to prometheus.yml

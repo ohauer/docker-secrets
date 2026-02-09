@@ -120,19 +120,21 @@
 - **Options**: `debug`, `info`, `warn`, `error`
 - **Example**: `debug`
 
-### HTTP_ADDR
-- **Description**: HTTP server listen address for health/metrics
+## Metrics and Health Endpoints
+
+### METRICS_ADDR
+- **Description**: Metrics server listen address for health checks and Prometheus metrics
 - **Default**: `127.0.0.1` (localhost only)
 - **Example**: `0.0.0.0` (all interfaces), `192.168.1.10`
 - **Note**: For security, default binds to localhost only. Use `0.0.0.0` only if needed.
 
-### HTTP_PORT
-- **Description**: HTTP server port for health/metrics
+### METRICS_PORT
+- **Description**: Metrics server port for health checks and Prometheus metrics
 - **Default**: `8080`
 - **Example**: `8081`
 
-### ENABLE_HTTP_SERVER
-- **Description**: Enable HTTP server for health checks and metrics
+### ENABLE_METRICS
+- **Description**: Enable metrics server for health checks and Prometheus metrics
 - **Default**: `true`
 - **Example**: `false`
 - **Note**: When disabled, health checks via HTTP are not available. Use `isready` command instead.
@@ -178,7 +180,7 @@ environment:
 
   # Observability
   LOG_LEVEL: info
-  HTTP_PORT: "8080"
+  METRICS_PORT: "8080"
   STATUS_FILE: /tmp/.ready-state
   ENABLE_TRACING: "false"
 ```
@@ -198,7 +200,7 @@ env:
     value: "/config/config.yaml"
   - name: LOG_LEVEL
     value: "info"
-  - name: HTTP_PORT
+  - name: METRICS_PORT
     value: "8080"
 ```
 

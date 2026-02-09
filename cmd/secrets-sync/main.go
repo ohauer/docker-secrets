@@ -210,17 +210,17 @@ func run() error {
 
 	// Start HTTP server if enabled
 	var healthServer *health.Server
-	if envCfg.EnableHTTPServer {
-		healthServer = health.NewServer(status, envCfg.HTTPAddr, envCfg.HTTPPort)
+	if envCfg.EnableMetrics {
+		healthServer = health.NewServer(status, envCfg.MetricsAddr, envCfg.MetricsPort)
 		if err := healthServer.Start(); err != nil {
 			return err
 		}
-		logger.Info("health server started",
-			zap.String("addr", envCfg.HTTPAddr),
-			zap.Int("port", envCfg.HTTPPort),
+		logger.Info("metrics server started",
+			zap.String("addr", envCfg.MetricsAddr),
+			zap.Int("port", envCfg.MetricsPort),
 		)
 	} else {
-		logger.Info("HTTP server disabled")
+		logger.Info("metrics server disabled")
 	}
 
 	// Set metrics
@@ -298,7 +298,7 @@ func run() error {
 	})
 	if healthServer != nil {
 		shutdownHandler.Register(func() error {
-			logger.Info("shutting down health server")
+			logger.Info("shutting down metrics server")
 			return healthServer.Stop()
 		})
 	}
