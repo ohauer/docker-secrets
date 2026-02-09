@@ -231,6 +231,148 @@ Always include:
 - Make permissions configurable
 - Document security implications
 
+### File Operations Security
+
+#### Atomic Writes with Random Temp Files
+Always use atomic writes with unpredictable temp file names:
+```go
+// GOOD: Random suffix prevents TOCTOU attacks
+tmpFile := config.Path + ".tmp." + randomString(8)
+os.WriteFile(tmpFile, content, mode)
+os.Rename(tmpFile, config.Path)  // Atomic
+
+// BAD: Predictable name allows symlink attacks
+tmpFile := config.Path + ".tmp"  // Attacker can pre-create symlink
+```
+
+#### Path Validation
+Validate all file paths with multiple checks:
+```go
+func validatePath(path string) error {
+    // 1. Check length against OS limits
+    if len(path) > MaxPathLen {
+        return fmt.Errorf("path too long")
+    }
+    
+    // 2. Reject Windows special paths
+    if strings.HasPrefix(path, `\\?\`) {
+        return fmt.Errorf("extended paths not allowed")
+    }
+    if strings.HasPrefix(path, `\\`) {
+        return fmt.Errorf("UNC paths not allowed")
+    }
+    
+    // 3. Require absolute paths
+    if !filepath.IsAbs(path) {
+        return fmt.Errorf("path must be absolute")
+    }
+    
+    // 4. Reject path traversal
+    if strings.Contains(path, "..") {
+        return fmt.Errorf("path traversal not allowed")
+    }
+    
+    return nil
+}
+```
+
+#### File Type Validation
+Reject symlinks and special files:
+```go
+func validateFileType(path string) error {
+    info, err := os.Lstat(path)  // Don't follow symlinks
+    if err != nil {
+        if os.IsNotExist(err) {
+            return nil  // File doesn't exist yet, OK
+        }
+        return err
+    }
+    
+    // Reject symlinks
+    if info.Mode()&os.ModeSymlink != 0 {
+        return fmt.Errorf("symlinks not allowed")
+    }
+    
+    // Reject special files (devices, pipes, sockets)
+    if !info.Mode().IsRegular() && !info.Mode().IsDir() {
+        return fmt.Errorf("only regular files allowed")
+    }
+    
+    return nil
+}
+```
+
+#### OS-Specific Path Limits
+Use build tags for platform-specific constants:
+```go
+// limits_unix.go
+// +build linux darwin freebsd openbsd netbsd dragonfly solaris aix
+const MaxPathLen = 4096  // PATH_MAX
+
+// limits_windows.go
+// +build windows
+const MaxPathLen = 260   // MAX_PATH (conservative)
+```
+
+### Resource Limits
+Always enforce limits to prevent DoS:
+```go
+const (
+    MaxSecretSize    = 1 * 1024 * 1024   // 1MB per secret
+    MaxResponseSize  = 10 * 1024 * 1024  // 10MB from API
+    MaxSecretCount   = 100                // Total secrets
+    MinRefreshInterval = 30 * time.Second // Prevent hammering
+)
+```
+
+### Cleanup Orphaned Files
+Clean up temporary files on startup:
+```go
+func CleanupOrphanedTempFiles(dirs []string) error {
+    for _, dir := range dirs {
+        pattern := filepath.Join(dir, "*.tmp.*")
+        matches, _ := filepath.Glob(pattern)
+        for _, file := range matches {
+            os.Remove(file)
+        }
+    }
+    return nil
+}
+```
+
+### Signal Handling
+Support graceful shutdown and reload:
+```go
+// Shutdown signals
+signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
+
+// Reload signal (SIGHUP)
+signal.Notify(reloadCh, syscall.SIGHUP)
+
+// Systemd integration
+ExecReload=/bin/kill -HUP $MAINPID
+```
+
+### Fuzzing
+Add fuzz tests for all input validation:
+```go
+func FuzzValidatePath(f *testing.F) {
+    f.Add("/tmp/test")
+    f.Add("../../../etc/passwd")
+    f.Add("/dev/null")
+    
+    f.Fuzz(func(t *testing.T, path string) {
+        _ = validatePath(path)  // Should not panic
+    })
+}
+```
+
+Run fuzzing in CI:
+```makefile
+fuzz:
+	go test -fuzz=. -fuzztime=10s ./...
+```
+
 ### Container Security
 - Use `FROM scratch` for minimal attack surface
 - Run as non-root user (UID 65534)
