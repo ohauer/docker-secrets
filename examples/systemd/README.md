@@ -9,7 +9,22 @@ This directory contains files for deploying secrets-sync as a systemd service.
 
 ## Quick Start
 
-### 1. Install the binary
+### 1. Create system user
+
+The service requires a static system user (not DynamicUser) to maintain persistent file ownership:
+
+```bash
+# Create secrets-sync system user and group
+sudo useradd -r -s /bin/false -d /nonexistent -c "Secrets Sync Service" secrets-sync
+```
+
+Or use the automated installer which creates the user automatically:
+
+```bash
+make install-systemd
+```
+
+### 2. Install the binary
 
 ```bash
 # Build from source
@@ -18,26 +33,42 @@ sudo cp bin/secrets-sync /usr/local/bin/
 sudo chmod +x /usr/local/bin/secrets-sync
 ```
 
-Or use the automated installer:
-
-```bash
-make install-systemd
-```
-
-### 2. Create configuration
+### 3. Create configuration
 
 ```bash
 # Create config directory
 sudo mkdir -p /etc/secrets-sync
 
-# Generate sample config
+# Optional: Set environment variables first for a complete config
+export VAULT_ADDR=https://vault.example.com:8200
+export VAULT_TOKEN=your-token-here
+# Or for AppRole:
+# export VAULT_ROLE_ID=your-role-id
+# export VAULT_SECRET_ID=your-secret-id
+
+# Generate sample config (uses VAULT_* env vars if set)
 secrets-sync init | sudo tee /etc/secrets-sync/config.yaml
 
-# Edit the config
+# Edit the config as needed
 sudo nano /etc/secrets-sync/config.yaml
 ```
 
-### 3. Set up environment (optional)
+### 4. Create output directories
+
+**Important**: Create directories before starting the service:
+
+```bash
+# Create directory for secrets (adjust path to match your config)
+sudo mkdir -p /var/secrets
+
+# Set ownership to secrets-sync user
+sudo chown secrets-sync:secrets-sync /var/secrets
+
+# Set permissions (750 = owner+group can access)
+sudo chmod 750 /var/secrets
+```
+
+### 5. Set up environment (optional)
 
 ```bash
 # Copy environment template
@@ -47,7 +78,7 @@ sudo cp examples/systemd/secrets-sync.env.example /etc/default/secrets-sync
 sudo nano /etc/default/secrets-sync
 ```
 
-### 4. Install and start service
+### 6. Install and start service
 
 ```bash
 # Copy unit file
@@ -78,18 +109,16 @@ IPAddressAllow=10.0.0.0/8
 IPAddressAllow=192.168.1.100
 ```
 
-**File Paths**: If secrets need to be written outside `/var/lib/secrets-sync`:
+**File Paths**: If secrets need to be written outside the configured paths:
 ```ini
-ReadWritePaths=/var/lib/secrets-sync
+ReadWritePaths=/var/secrets
 ReadWritePaths=/app/secrets
 ```
 
-**User/Group**: To run as specific user instead of DynamicUser:
-```ini
-# Comment out DynamicUser=yes
-User=secrets-sync
-Group=secrets-sync
-```
+**Note**: The service uses a static `secrets-sync` user (not DynamicUser) to maintain persistent file ownership across restarts. This allows:
+- Consistent file ownership
+- Flexible output paths
+- Group-based access sharing with other services
 
 ### Environment Variables
 
@@ -160,12 +189,22 @@ curl http://localhost:8080/health
 
 The unit file includes extensive security hardening:
 
-- **DynamicUser**: Runs as ephemeral user
+- **Static User**: Runs as dedicated `secrets-sync` system user (not DynamicUser)
 - **Filesystem Protection**: Read-only root, private /tmp
 - **Network Restrictions**: Limited address families, IP filtering
 - **Capabilities**: No special capabilities
 - **System Calls**: Filtered to safe subset
 - **Namespaces**: Restricted
+
+**Why Static User Instead of DynamicUser?**
+
+The service uses a static user (`secrets-sync`) rather than `DynamicUser=yes` because:
+1. **Persistent UID** - Files maintain correct ownership across reboots/reinstalls
+2. **Flexible Paths** - Can write to arbitrary paths (not limited to StateDirectory)
+3. **Group Sharing** - Other services can access secrets via group membership
+4. **External Access** - Services like nginx/postgres can read the secret files
+
+With `DynamicUser=yes`, the UID changes on each restart, breaking file ownership.
 
 ### Adjusting Security
 
