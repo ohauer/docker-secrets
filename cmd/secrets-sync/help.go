@@ -21,10 +21,18 @@ COMMANDS:
     help        Show this help message
 
 FLAGS:
-    -h, --help  Show this help message
+    -c, --config <path>  Path to configuration file
+    -h, --help           Show this help message
+
+CONFIGURATION:
+    Config file precedence (highest to lowest):
+    1. --config/-c flag
+    2. CONFIG_FILE environment variable
+    3. ./config.yaml (current directory)
+    4. /etc/secrets-sync/config.yaml (system-wide)
 
 ENVIRONMENT VARIABLES:
-    CONFIG_FILE              Path to configuration file (default: /config.yaml)
+    CONFIG_FILE              Path to configuration file
     VAULT_ADDR              Vault/OpenBao server address
     VAULT_TOKEN             Vault token for authentication
     VAULT_ROLE_ID           AppRole role ID
@@ -39,14 +47,22 @@ ENVIRONMENT VARIABLES:
     WATCH_CONFIG            Enable config hot reload (default: false)
 
 EXAMPLES:
-    # Run with config file
+    # Run with config file (flag)
+    secrets-sync --config config.yaml
+    secrets-sync -c /etc/secrets-sync/config.yaml
+
+    # Run with config file (env var)
     CONFIG_FILE=config.yaml secrets-sync
+
+    # Run with default config location
+    secrets-sync
 
     # Generate example config
     secrets-sync init > config.yaml
 
     # Validate config
     secrets-sync validate
+    secrets-sync --config custom.yaml validate
 
     # Check version
     secrets-sync version
@@ -65,6 +81,6 @@ For more information, see: https://github.com/ohauer/docker-secrets
 }
 
 func printUsage() {
-	fmt.Fprintf(os.Stderr, "Usage: secrets-sync [command]\n")
+	fmt.Fprintf(os.Stderr, "Usage: secrets-sync [--config <path>] [command]\n")
 	fmt.Fprintf(os.Stderr, "Run 'secrets-sync help' for more information.\n")
 }

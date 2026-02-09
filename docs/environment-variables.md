@@ -1,5 +1,20 @@
 # Environment Variables
 
+## Configuration File
+
+### CONFIG_FILE
+- **Description**: Path to configuration file
+- **Required**: No
+- **Default**: Tries `./config.yaml`, then `/etc/secrets-sync/config.yaml`
+- **Example**: `/etc/secrets-sync/config.yaml`
+- **Note**: Can be overridden by `--config` / `-c` command-line flag
+
+**Precedence** (highest to lowest):
+1. `--config` / `-c` flag
+2. `CONFIG_FILE` environment variable
+3. `./config.yaml` (current directory)
+4. `/etc/secrets-sync/config.yaml` (system-wide)
+
 ## Vault Connection
 
 ### VAULT_ADDR

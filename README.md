@@ -80,15 +80,28 @@ The tool provides several commands for different use cases:
 #### Run the Service
 
 ```bash
-# Run with config file
+# Run with config file (using flag)
+./secrets-sync --config config.yaml
+./secrets-sync -c config.yaml
+
+# Run with config file (using environment variable)
 CONFIG_FILE=config.yaml ./secrets-sync
+
+# Run with default config location (./config.yaml or /etc/secrets-sync/config.yaml)
+./secrets-sync
 
 # Run with environment variables
 export VAULT_ADDR=https://vault.example.com:8443
 export VAULT_ROLE_ID=your-role-id
 export VAULT_SECRET_ID=your-secret-id
-CONFIG_FILE=config.yaml ./secrets-sync
+./secrets-sync --config config.yaml
 ```
+
+**Config file precedence** (highest to lowest):
+1. `--config` / `-c` flag
+2. `CONFIG_FILE` environment variable
+3. `./config.yaml` (current directory)
+4. `/etc/secrets-sync/config.yaml` (system-wide)
 
 #### Generate Sample Configuration
 
@@ -102,6 +115,7 @@ CONFIG_FILE=config.yaml ./secrets-sync
 ```bash
 # Validate config file without running
 ./secrets-sync validate
+./secrets-sync --config custom-config.yaml validate
 CONFIG_FILE=custom-config.yaml ./secrets-sync validate
 ```
 

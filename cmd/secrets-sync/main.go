@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"os"
 	"time"
 
@@ -15,9 +17,24 @@ import (
 	"go.uber.org/zap"
 )
 
+var configFile string
+
+func init() {
+	flag.StringVar(&configFile, "config", "", "path to config file")
+	flag.StringVar(&configFile, "c", "", "path to config file (shorthand)")
+}
+
 func main() {
-	if len(os.Args) > 1 {
-		switch os.Args[1] {
+	// Parse flags first
+	flag.Parse()
+
+	// Get remaining args after flags
+	args := flag.Args()
+
+	// Check for subcommands
+	if len(args) > 0 {
+		cmd := args[0]
+		switch cmd {
 		case "help", "-h", "--help":
 			printHelp()
 			os.Exit(0)
@@ -30,15 +47,17 @@ func main() {
 		case "validate":
 			os.Exit(runValidate())
 		case "convert":
-			os.Exit(runConvert(os.Args[2:]))
+			os.Exit(runConvert(args[1:]))
 		case "isready":
 			os.Exit(isReady())
 		default:
+			fmt.Fprintf(os.Stderr, "Unknown command: %s\n", cmd)
 			printUsage()
 			os.Exit(1)
 		}
 	}
 
+	// No command specified, run main service
 	if err := run(); err != nil {
 		if logger.Get() != nil {
 			logger.Error("fatal error", zap.Error(err))
@@ -48,8 +67,30 @@ func main() {
 	}
 }
 
+func getConfigFile() string {
+	// Precedence: flag > env var > defaults
+	if configFile != "" {
+		return configFile
+	}
+
+	if envFile := os.Getenv("CONFIG_FILE"); envFile != "" {
+		return envFile
+	}
+
+	// Try default locations
+	defaults := []string{"./config.yaml", "/etc/secrets-sync/config.yaml"}
+	for _, path := range defaults {
+		if _, err := os.Stat(path); err == nil {
+			return path
+		}
+	}
+
+	return "./config.yaml"
+}
+
 func run() error {
 	envCfg := config.LoadEnvConfig()
+	configPath := getConfigFile()
 
 	if err := logger.Init(envCfg.LogLevel); err != nil {
 		return err
@@ -57,11 +98,11 @@ func run() error {
 	defer logger.Sync()
 
 	logger.Info("starting docker secrets sync",
-		zap.String("config_file", envCfg.ConfigFile),
+		zap.String("config_file", configPath),
 		zap.Bool("watch_config", envCfg.WatchConfig),
 	)
 
-	cfg, err := config.Load(envCfg.ConfigFile)
+	cfg, err := config.Load(configPath)
 	if err != nil {
 		return err
 	}

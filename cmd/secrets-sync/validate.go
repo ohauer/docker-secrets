@@ -22,10 +22,9 @@ func validateConfig(configFile string) error {
 }
 
 func runValidate() int {
-	envCfg := config.LoadEnvConfig()
-	configFile := envCfg.ConfigFile
+	configPath := getConfigFile()
 
-	if err := validateConfig(configFile); err != nil {
+	if err := validateConfig(configPath); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		return 1
 	}

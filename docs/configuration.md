@@ -1,5 +1,24 @@
 # Configuration
 
+## Configuration File Location
+
+The configuration file can be specified in multiple ways with the following precedence (highest to lowest):
+
+1. **Command-line flag**: `--config` or `-c`
+   ```bash
+   ./secrets-sync --config /path/to/config.yaml
+   ./secrets-sync -c config.yaml
+   ```
+
+2. **Environment variable**: `CONFIG_FILE`
+   ```bash
+   CONFIG_FILE=/path/to/config.yaml ./secrets-sync
+   ```
+
+3. **Default locations** (checked in order):
+   - `./config.yaml` (current directory)
+   - `/etc/secrets-sync/config.yaml` (system-wide)
+
 ## Configuration File Structure
 
 The configuration file is a YAML file with two main sections: `secretStore` and `secrets`.
