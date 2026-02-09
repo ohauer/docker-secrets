@@ -97,6 +97,8 @@ func getEnvIntRange(key string, defaultValue, minValue, maxValue int) int {
 		if err == nil && i >= minValue && i <= maxValue {
 			return i
 		}
+		// Return -1 to indicate invalid value
+		return -1
 	}
 	return defaultValue
 }

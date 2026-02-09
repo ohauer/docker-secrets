@@ -208,7 +208,15 @@ func run() error {
 	// Set up health status
 	status := health.NewStatus(envCfg.StatusFile)
 
-	// Start HTTP server if enabled
+	// Validate metrics port
+	if envCfg.MetricsPort < 1025 || envCfg.MetricsPort > 65535 {
+		logger.Error("invalid METRICS_PORT: must be between 1025 and 65535, disabling metrics",
+			zap.Int("port", envCfg.MetricsPort),
+		)
+		envCfg.EnableMetrics = false
+	}
+
+	// Start metrics server if enabled
 	var healthServer *health.Server
 	if envCfg.EnableMetrics {
 		healthServer = health.NewServer(status, envCfg.MetricsAddr, envCfg.MetricsPort)

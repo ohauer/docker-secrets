@@ -133,6 +133,7 @@
 - **Default**: `8080`
 - **Range**: `1025-65535` (ports below 1025 require root privileges)
 - **Example**: `8081`, `9090`
+- **Note**: Invalid values will log an error and disable metrics server
 
 ### ENABLE_METRICS
 - **Description**: Enable metrics server for health checks and Prometheus metrics
