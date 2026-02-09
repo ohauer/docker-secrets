@@ -1,3 +1,4 @@
+//go:build linux || darwin || freebsd || openbsd || netbsd || dragonfly || solaris || aix
 // +build linux darwin freebsd openbsd netbsd dragonfly solaris aix
 
 package filewriter

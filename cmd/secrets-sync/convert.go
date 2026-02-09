@@ -144,8 +144,8 @@ func convertExternalSecret(inputFile string, cfg ConvertConfig) error {
 
 	// Try to parse as a List first
 	var list struct {
-		APIVersion string `yaml:"apiVersion"`
-		Kind       string `yaml:"kind"`
+		APIVersion string      `yaml:"apiVersion"`
+		Kind       string      `yaml:"kind"`
 		Items      []yaml.Node `yaml:"items"`
 	}
 

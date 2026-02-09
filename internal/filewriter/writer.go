@@ -236,4 +236,3 @@ func randomString(n int) string {
 	}
 	return string(b)
 }
-
