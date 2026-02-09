@@ -319,6 +319,25 @@ OTEL_EXPORTER_ENDPOINT=http://jaeger:4318
 - [OpenBao Development Environment](docker-compose.openbao.yml)
 - [Example Configurations](examples/)
 
+## Documentation
+
+Complete documentation is available in the [docs/](docs/) directory:
+
+**User Guides:**
+- [Configuration Reference](docs/configuration.md)
+- [Environment Variables](docs/environment-variables.md)
+- [Systemd Deployment](docs/systemd-deployment.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Fuzzing/Security Testing](docs/fuzzing.md)
+- [Man Page](docs/secrets-sync.1) - `man secrets-sync` after installation
+
+**Development:**
+- [Project Plan](docs/development/PLAN.md)
+- [Roadmap](docs/development/ROADMAP.md)
+- [Security Audit](docs/development/SECURITY_AUDIT.md)
+
+See [docs/README.md](docs/README.md) for complete documentation index.
+
 ## Troubleshooting
 
 See [docs/troubleshooting.md](docs/troubleshooting.md) for common issues and solutions.
