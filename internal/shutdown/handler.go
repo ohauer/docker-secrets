@@ -16,6 +16,7 @@ type Handler struct {
 	handlers []func() error
 	mu       sync.Mutex
 	sigCh    chan os.Signal
+	reloadCh chan os.Signal
 }
 
 // NewHandler creates a new shutdown handler
@@ -23,10 +24,14 @@ func NewHandler(timeout time.Duration) *Handler {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
 
+	reloadCh := make(chan os.Signal, 1)
+	signal.Notify(reloadCh, syscall.SIGHUP)
+
 	return &Handler{
 		timeout:  timeout,
 		handlers: make([]func() error, 0),
 		sigCh:    sigCh,
+		reloadCh: reloadCh,
 	}
 }
 
@@ -40,6 +45,11 @@ func (h *Handler) Register(handler func() error) {
 // Wait waits for shutdown signal
 func (h *Handler) Wait() <-chan os.Signal {
 	return h.sigCh
+}
+
+// WaitReload waits for reload signal (SIGHUP)
+func (h *Handler) WaitReload() <-chan os.Signal {
+	return h.reloadCh
 }
 
 // Shutdown executes all registered handlers
@@ -78,5 +88,7 @@ func (h *Handler) Shutdown() error {
 // Stop stops listening for signals
 func (h *Handler) Stop() {
 	signal.Stop(h.sigCh)
+	signal.Stop(h.reloadCh)
 	close(h.sigCh)
+	close(h.reloadCh)
 }

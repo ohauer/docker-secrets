@@ -87,6 +87,9 @@ secrets-sync init | sudo tee /etc/secrets-sync/config.yaml
 sudo cp examples/systemd/secrets-sync.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now secrets-sync
+
+# Reload configuration without restart
+sudo systemctl reload secrets-sync
 ```
 
 See [Systemd Deployment Guide](docs/systemd-deployment.md) for detailed instructions.

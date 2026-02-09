@@ -330,18 +330,58 @@ func run() error {
 
 	logger.Info("docker secrets sync running, waiting for shutdown signal")
 
-	// Wait for shutdown signal
-	<-shutdownHandler.Wait()
+	// Wait for signals
+	for {
+		select {
+		case <-shutdownHandler.Wait():
+			logger.Info("shutdown signal received, stopping gracefully")
 
-	logger.Info("shutdown signal received, stopping gracefully")
+			if err := shutdownHandler.Shutdown(); err != nil {
+				logger.Error("shutdown error", zap.Error(err))
+				return err
+			}
 
-	if err := shutdownHandler.Shutdown(); err != nil {
-		logger.Error("shutdown error", zap.Error(err))
-		return err
+			logger.Info("shutdown complete")
+			return nil
+
+		case <-shutdownHandler.WaitReload():
+			logger.Info("reload signal (SIGHUP) received, reloading configuration")
+
+			// Reload configuration
+			newCfg, err := config.Load(configPath)
+			if err != nil {
+				logger.Error("failed to reload configuration", zap.Error(err))
+				continue
+			}
+
+			// Validate new configuration
+			if err := config.Validate(newCfg); err != nil {
+				logger.Error("invalid configuration, keeping current config", zap.Error(err))
+				continue
+			}
+
+			// Stop current scheduler
+			scheduler.Stop()
+
+			// Update configuration
+			cfg = newCfg
+			logger.Info("configuration reloaded",
+				zap.Int("secret_count", len(cfg.Secrets)),
+			)
+
+			// Restart scheduler with new secrets
+			scheduler = syncer.NewScheduler(secretSyncer)
+			for _, secret := range cfg.Secrets {
+				scheduler.AddSecret(cfg, secret)
+				logger.Info("secret sync restarted",
+					zap.String("name", secret.Name),
+					zap.Duration("refresh_interval", secret.RefreshInterval),
+				)
+			}
+
+			metrics.SetSecretsConfigured(len(cfg.Secrets))
+		}
 	}
-
-	logger.Info("shutdown complete")
-	return nil
 }
 
 func isReady() int {

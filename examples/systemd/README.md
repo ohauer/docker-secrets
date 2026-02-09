@@ -133,8 +133,9 @@ sudo systemctl stop secrets-sync
 # Restart
 sudo systemctl restart secrets-sync
 
-# Reload config (if WATCH_CONFIG=true)
-# Just edit the config file, it will auto-reload
+# Reload config (sends SIGHUP signal)
+sudo systemctl reload secrets-sync
+# Or manually: sudo kill -HUP $(pidof secrets-sync)
 
 # Check status
 sudo systemctl status secrets-sync
