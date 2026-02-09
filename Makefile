@@ -1,4 +1,4 @@
-.PHONY: help all build test lint clean install-systemd uninstall-systemd
+.PHONY: help all build test fuzz lint clean install-systemd uninstall-systemd
 
 BINARY_NAME=secrets-sync
 BUILD_DIR=bin
@@ -18,6 +18,7 @@ help:
 	@echo "  build            - Build the binary"
 	@echo "  build-static     - Build static binary for container"
 	@echo "  test             - Run tests"
+	@echo "  fuzz             - Run fuzz tests (10s per test)"
 	@echo "  coverage         - Generate coverage report"
 	@echo "  lint             - Run linter"
 	@echo "  fmt              - Format code"
@@ -42,6 +43,15 @@ build-static:
 
 test:
 	$(GO) test -v -race -coverprofile=coverage.out ./...
+
+fuzz:
+	@echo "Running fuzz tests (10s each)..."
+	$(GO) test -fuzz=FuzzValidatePath -fuzztime=10s ./internal/filewriter
+	$(GO) test -fuzz=FuzzValidateMode -fuzztime=10s ./internal/filewriter
+	$(GO) test -fuzz=FuzzRender -fuzztime=10s ./internal/template
+	$(GO) test -fuzz=FuzzConfigLoad -fuzztime=10s ./internal/config
+	$(GO) test -fuzz=FuzzValidateFilePath -fuzztime=10s ./internal/config
+	@echo "All fuzz tests passed!"
 
 coverage: test
 	$(GO) tool cover -html=coverage.out -o coverage.html

@@ -329,6 +329,9 @@ See [docs/troubleshooting.md](docs/troubleshooting.md) for common issues and sol
 # Run tests
 make test
 
+# Run fuzz tests
+make fuzz
+
 # Run linter
 make lint
 
@@ -338,6 +341,8 @@ make build
 # Build Docker image
 make docker-build
 ```
+
+See [Fuzzing Guide](docs/fuzzing.md) for security testing.
 
 ## Security
 
