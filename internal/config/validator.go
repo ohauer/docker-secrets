@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/ohauer/docker-secrets/internal/filewriter"
 )
@@ -17,6 +18,11 @@ func Validate(cfg *Config) error {
 
 	if len(cfg.Secrets) == 0 {
 		return fmt.Errorf("at least one secret must be defined")
+	}
+
+	// Limit maximum number of secrets to prevent resource exhaustion
+	if len(cfg.Secrets) > 100 {
+		return fmt.Errorf("too many secrets defined (%d), maximum is 100", len(cfg.Secrets))
 	}
 
 	for i, secret := range cfg.Secrets {
@@ -143,6 +149,11 @@ func validateSecret(secret *Secret) error {
 		return fmt.Errorf("refreshInterval must be positive")
 	}
 
+	// Enforce minimum refresh interval to prevent hammering Vault
+	if secret.RefreshInterval < 30*time.Second {
+		return fmt.Errorf("refreshInterval must be at least 30s, got: %s", secret.RefreshInterval)
+	}
+
 	if len(secret.Template.Data) == 0 {
 		return fmt.Errorf("template.data must have at least one entry")
 	}
@@ -169,6 +180,11 @@ func validateFile(file *File) error {
 		return fmt.Errorf("path is required")
 	}
 
+	// Validate path for security (same validation as at write time)
+	if err := validateFilePath(file.Path); err != nil {
+		return fmt.Errorf("invalid path: %w", err)
+	}
+
 	// Set default mode if empty
 	if file.Mode == "" {
 		file.Mode = "0600"
@@ -191,6 +207,25 @@ func validateFile(file *File) error {
 		if _, err := filewriter.ParseOwner(file.Group); err != nil {
 			return fmt.Errorf("invalid group '%s': %w", file.Group, err)
 		}
+	}
+
+	return nil
+}
+
+// validateFilePath validates file path for security
+func validateFilePath(path string) error {
+	if path == "" {
+		return fmt.Errorf("path cannot be empty")
+	}
+
+	// Ensure path is absolute for security
+	if !strings.HasPrefix(path, "/") {
+		return fmt.Errorf("path must be absolute")
+	}
+
+	// Check for path traversal attempts
+	if strings.Contains(path, "..") {
+		return fmt.Errorf("path contains '..' which is not allowed")
 	}
 
 	return nil
