@@ -87,6 +87,19 @@ func validatePath(path string) error {
 		return fmt.Errorf("path cannot be empty")
 	}
 
+	// Check path length against OS limit
+	if len(path) > MaxPathLen {
+		return fmt.Errorf("path length %d exceeds maximum %d for this OS", len(path), MaxPathLen)
+	}
+
+	// Reject Windows extended paths and UNC paths
+	if strings.HasPrefix(path, `\\?\`) || strings.HasPrefix(path, `\\.\`) {
+		return fmt.Errorf("extended paths (\\\\?\\) and device paths (\\\\.\\ ) are not allowed")
+	}
+	if strings.HasPrefix(path, `\\`) {
+		return fmt.Errorf("UNC paths (\\\\server\\share) are not allowed, mount the share locally")
+	}
+
 	// Ensure path is absolute for security
 	if !filepath.IsAbs(path) {
 		return fmt.Errorf("path must be absolute")

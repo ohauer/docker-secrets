@@ -287,6 +287,10 @@ func TestValidatePath(t *testing.T) {
 		{"relative with dot", "./secret.txt", true},
 		{"path traversal", "/tmp/../etc/passwd", true},
 		{"path traversal nested", "/var/lib/../../etc/passwd", true},
+		{"too long path", "/" + string(make([]byte, MaxPathLen)), true},
+		{"windows extended path", `\\?\C:\secrets\test`, true},
+		{"windows device path", `\\.\pipe\test`, true},
+		{"windows UNC path", `\\server\share\secret`, true},
 	}
 
 	for _, tt := range tests {
