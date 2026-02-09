@@ -264,13 +264,16 @@ func validateNoDuplicatePaths(secrets []Secret) error {
 		for _, file := range secret.Files {
 			if existingSecret, found := pathToSecret[file.Path]; found {
 				if existingSecret != secret.Name {
+					// Different secrets writing to same path - race condition
 					return fmt.Errorf("duplicate file path %q: used by both secret %q and secret %q (race condition)",
 						file.Path, existingSecret, secret.Name)
+				} else {
+					// Same secret writing to same path multiple times - configuration error
+					return fmt.Errorf("duplicate file path %q in secret %q (same path listed multiple times)",
+						file.Path, secret.Name)
 				}
-				// Same secret writing to same path multiple times is OK (idempotent)
-			} else {
-				pathToSecret[file.Path] = secret.Name
 			}
+			pathToSecret[file.Path] = secret.Name
 		}
 	}
 

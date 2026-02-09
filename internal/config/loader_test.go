@@ -313,3 +313,38 @@ func TestValidate_SameSecretMultiplePaths(t *testing.T) {
 		t.Fatalf("expected no error for same secret writing to multiple paths, got: %v", err)
 	}
 }
+
+func TestValidate_SameSecretSamePathTwice(t *testing.T) {
+	cfg := &Config{
+		SecretStore: SecretStore{
+			Address:    "http://localhost:8200",
+			AuthMethod: "token",
+			Token:      "test",
+		},
+		Secrets: []Secret{
+			{
+				Name:            "test-secret",
+				Key:             "secret/data/test",
+				MountPath:       "secret",
+				KVVersion:       "v2",
+				RefreshInterval: 5 * time.Minute,
+				Template: Template{Data: map[string]string{
+					"key1": "{{ .value }}",
+					"key2": "{{ .value }}",
+				}},
+				Files: []File{
+					{Path: "/secrets/test"},
+					{Path: "/secrets/test"}, // Same path twice - configuration error
+				},
+			},
+		},
+	}
+
+	err := Validate(cfg)
+	if err == nil {
+		t.Fatal("expected error for same secret writing to same path twice, got nil")
+	}
+	if !strings.Contains(err.Error(), "duplicate file path") {
+		t.Errorf("expected duplicate path error, got: %v", err)
+	}
+}
