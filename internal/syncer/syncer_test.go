@@ -59,8 +59,8 @@ func TestSyncSecret_Success(t *testing.T) {
 			},
 		},
 		Files: []config.File{
+			{Path: filepath.Join(tmpDir, "password"), Mode: "0600"}, // password comes first alphabetically
 			{Path: filepath.Join(tmpDir, "username"), Mode: "0644"},
-			{Path: filepath.Join(tmpDir, "password"), Mode: "0600"},
 		},
 	}
 

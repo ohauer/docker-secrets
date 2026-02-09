@@ -3,6 +3,7 @@ package syncer
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/ohauer/docker-secrets/internal/config"
@@ -56,10 +57,12 @@ func (s *SecretSyncer) SyncSecret(ctx context.Context, cfg *config.Config, secre
 		return fmt.Errorf("template count (%d) does not match file count (%d)", len(rendered), len(secret.Files))
 	}
 
+	// Sort template names for deterministic file mapping
 	templateNames := make([]string, 0, len(secret.Template.Data))
 	for name := range secret.Template.Data {
 		templateNames = append(templateNames, name)
 	}
+	sort.Strings(templateNames)
 
 	for i, file := range secret.Files {
 		mode, err := filewriter.ParseMode(file.Mode)
