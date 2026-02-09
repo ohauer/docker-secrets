@@ -47,7 +47,7 @@ ENVIRONMENT VARIABLES:
 
 METRICS:
     METRICS_ADDR            Metrics server listen address (default: 127.0.0.1)
-    METRICS_PORT            Metrics server port (default: 8080)
+    METRICS_PORT            Metrics server port (default: 8080, range: 1025-65535)
     ENABLE_METRICS          Enable metrics/health endpoints (default: true)
 
 EXAMPLES:

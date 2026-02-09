@@ -53,7 +53,7 @@ func LoadEnvConfig() *EnvConfig {
 		CircuitBreakerTimeout:  getEnvDuration("CIRCUIT_BREAKER_TIMEOUT", 30*time.Second),
 		LogLevel:               getEnv("LOG_LEVEL", "info"),
 		MetricsAddr:            getEnv("METRICS_ADDR", "127.0.0.1"),
-		MetricsPort:            getEnvInt("METRICS_PORT", 8080),
+		MetricsPort:            getEnvIntRange("METRICS_PORT", 8080, 1025, 65535),
 		EnableMetrics:          getEnvBool("ENABLE_METRICS", true),
 		StatusFile:             getEnv("STATUS_FILE", "/tmp/.ready-state"),
 		EnableTracing:          getEnvBool("ENABLE_TRACING", false),
@@ -85,6 +85,16 @@ func getEnvInt(key string, defaultValue int) int {
 	if value := os.Getenv(key); value != "" {
 		i, err := strconv.Atoi(value)
 		if err == nil {
+			return i
+		}
+	}
+	return defaultValue
+}
+
+func getEnvIntRange(key string, defaultValue, minValue, maxValue int) int {
+	if value := os.Getenv(key); value != "" {
+		i, err := strconv.Atoi(value)
+		if err == nil && i >= minValue && i <= maxValue {
 			return i
 		}
 	}

@@ -131,7 +131,8 @@
 ### METRICS_PORT
 - **Description**: Metrics server port for health checks and Prometheus metrics
 - **Default**: `8080`
-- **Example**: `8081`
+- **Range**: `1025-65535` (ports below 1025 require root privileges)
+- **Example**: `8081`, `9090`
 
 ### ENABLE_METRICS
 - **Description**: Enable metrics server for health checks and Prometheus metrics
