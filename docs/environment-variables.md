@@ -120,10 +120,22 @@
 - **Options**: `debug`, `info`, `warn`, `error`
 - **Example**: `debug`
 
+### HTTP_ADDR
+- **Description**: HTTP server listen address for health/metrics
+- **Default**: `127.0.0.1` (localhost only)
+- **Example**: `0.0.0.0` (all interfaces), `192.168.1.10`
+- **Note**: For security, default binds to localhost only. Use `0.0.0.0` only if needed.
+
 ### HTTP_PORT
 - **Description**: HTTP server port for health/metrics
 - **Default**: `8080`
 - **Example**: `8081`
+
+### ENABLE_HTTP_SERVER
+- **Description**: Enable HTTP server for health checks and metrics
+- **Default**: `true`
+- **Example**: `false`
+- **Note**: When disabled, health checks via HTTP are not available. Use `isready` command instead.
 
 ### STATUS_FILE
 - **Description**: Path to readiness status file

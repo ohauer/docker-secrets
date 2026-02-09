@@ -66,14 +66,16 @@ func (s *Status) GetStatus() (bool, int, int) {
 // Server provides HTTP health endpoints
 type Server struct {
 	status *Status
+	addr   string
 	port   int
 	server *http.Server
 }
 
 // NewServer creates a new health server
-func NewServer(status *Status, port int) *Server {
+func NewServer(status *Status, addr string, port int) *Server {
 	return &Server{
 		status: status,
+		addr:   addr,
 		port:   port,
 	}
 }
@@ -86,7 +88,7 @@ func (s *Server) Start() error {
 	mux.Handle("/metrics", promhttp.Handler())
 
 	s.server = &http.Server{
-		Addr:    fmt.Sprintf(":%d", s.port),
+		Addr:    fmt.Sprintf("%s:%d", s.addr, s.port),
 		Handler: mux,
 	}
 

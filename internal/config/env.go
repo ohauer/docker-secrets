@@ -23,7 +23,9 @@ type EnvConfig struct {
 	CircuitBreakerInterval time.Duration
 	CircuitBreakerTimeout  time.Duration
 	LogLevel               string
+	HTTPAddr               string
 	HTTPPort               int
+	EnableHTTPServer       bool
 	StatusFile             string
 	EnableTracing          bool
 	OTELExporterEndpoint   string
@@ -50,7 +52,9 @@ func LoadEnvConfig() *EnvConfig {
 		CircuitBreakerInterval: getEnvDuration("CIRCUIT_BREAKER_INTERVAL", 60*time.Second),
 		CircuitBreakerTimeout:  getEnvDuration("CIRCUIT_BREAKER_TIMEOUT", 30*time.Second),
 		LogLevel:               getEnv("LOG_LEVEL", "info"),
+		HTTPAddr:               getEnv("HTTP_ADDR", "127.0.0.1"),
 		HTTPPort:               getEnvInt("HTTP_PORT", 8080),
+		EnableHTTPServer:       getEnvBool("ENABLE_HTTP_SERVER", true),
 		StatusFile:             getEnv("STATUS_FILE", "/tmp/.ready-state"),
 		EnableTracing:          getEnvBool("ENABLE_TRACING", false),
 		OTELExporterEndpoint:   getEnv("OTEL_EXPORTER_ENDPOINT", ""),

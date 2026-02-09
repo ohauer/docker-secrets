@@ -43,7 +43,9 @@ ENVIRONMENT VARIABLES:
     VAULT_CLIENT_CERT       Path to client certificate (mTLS)
     VAULT_CLIENT_KEY        Path to client key (mTLS)
     LOG_LEVEL               Log level (debug, info, warn, error)
+    HTTP_ADDR               Health server listen address (default: 127.0.0.1)
     HTTP_PORT               Health server port (default: 8080)
+    ENABLE_HTTP_SERVER      Enable HTTP server (default: true)
     WATCH_CONFIG            Enable config hot reload (default: false)
 
 EXAMPLES:

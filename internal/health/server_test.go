@@ -69,7 +69,7 @@ func TestStatus_GetStatus(t *testing.T) {
 
 func TestHealthHandler(t *testing.T) {
 	status := NewStatus("")
-	server := NewServer(status, 8080)
+	server := NewServer(status, "127.0.0.1", 8080)
 
 	req := httptest.NewRequest("GET", "/health", nil)
 	w := httptest.NewRecorder()
@@ -94,7 +94,7 @@ func TestReadyHandler_Ready(t *testing.T) {
 	status := NewStatus("")
 	_ = status.SetReady(2, 2)
 
-	server := NewServer(status, 8080)
+	server := NewServer(status, "127.0.0.1", 8080)
 
 	req := httptest.NewRequest("GET", "/ready", nil)
 	w := httptest.NewRecorder()
@@ -119,7 +119,7 @@ func TestReadyHandler_NotReady(t *testing.T) {
 	status := NewStatus("")
 	_ = status.SetReady(2, 0)
 
-	server := NewServer(status, 8080)
+	server := NewServer(status, "127.0.0.1", 8080)
 
 	req := httptest.NewRequest("GET", "/ready", nil)
 	w := httptest.NewRecorder()

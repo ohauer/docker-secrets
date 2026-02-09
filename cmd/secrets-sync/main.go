@@ -207,13 +207,21 @@ func run() error {
 
 	// Set up health status
 	status := health.NewStatus(envCfg.StatusFile)
-	healthServer := health.NewServer(status, envCfg.HTTPPort)
 
-	if err := healthServer.Start(); err != nil {
-		return err
+	// Start HTTP server if enabled
+	var healthServer *health.Server
+	if envCfg.EnableHTTPServer {
+		healthServer = health.NewServer(status, envCfg.HTTPAddr, envCfg.HTTPPort)
+		if err := healthServer.Start(); err != nil {
+			return err
+		}
+		logger.Info("health server started",
+			zap.String("addr", envCfg.HTTPAddr),
+			zap.Int("port", envCfg.HTTPPort),
+		)
+	} else {
+		logger.Info("HTTP server disabled")
 	}
-
-	logger.Info("health server started", zap.Int("port", envCfg.HTTPPort))
 
 	// Set metrics
 	metrics.SetSecretsConfigured(len(cfg.Secrets))
@@ -288,10 +296,12 @@ func run() error {
 		scheduler.Stop()
 		return nil
 	})
-	shutdownHandler.Register(func() error {
-		logger.Info("shutting down health server")
-		return healthServer.Stop()
-	})
+	if healthServer != nil {
+		shutdownHandler.Register(func() error {
+			logger.Info("shutting down health server")
+			return healthServer.Stop()
+		})
+	}
 	if tracingShutdown != nil {
 		shutdownHandler.Register(func() error {
 			logger.Info("shutting down tracing")
