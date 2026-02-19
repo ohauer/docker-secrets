@@ -1,0 +1,61 @@
+secretStore:
+  address: "http://localhost:8300"
+  authMethod: "token"
+  token: "dev-root-token"
+  namespace: "team-a"  # Global namespace - applies to all secrets by default
+
+# Namespace support:
+# - Global namespace in secretStore applies to all secrets
+# - Per-secret namespace overrides global namespace
+# - Empty namespace means root namespace (no X-Vault-Namespace header)
+
+secrets:
+  # This secret uses the global namespace (team-a)
+  - name: "team-a-config"
+    key: "app/config"
+    mountPath: "secret"
+    kvVersion: "v2"
+    refreshInterval: "30m"
+    template:
+      data:
+        api_key: '{{ .apiKey }}'       # -> .work/secrets/team-a-api-key
+        api_secret: '{{ .apiSecret }}' # -> .work/secrets/team-a-api-secret
+    files:
+      - path: ".work/secrets/team-a-api-key"
+        mode: "0600"
+      - path: ".work/secrets/team-a-api-secret"
+        mode: "0600"
+
+  # This secret overrides the global namespace with team-b
+  - name: "team-b-config"
+    key: "app/config"
+    mountPath: "secret"
+    namespace: "team-b"  # Per-secret namespace override
+    kvVersion: "v2"
+    refreshInterval: "30m"
+    template:
+      data:
+        api_key: '{{ .apiKey }}'       # -> .work/secrets/team-b-api-key
+        api_secret: '{{ .apiSecret }}' # -> .work/secrets/team-b-api-secret
+    files:
+      - path: ".work/secrets/team-b-api-key"
+        mode: "0600"
+      - path: ".work/secrets/team-b-api-secret"
+        mode: "0600"
+
+  # This secret uses empty namespace to access root namespace
+  - name: "root-config"
+    key: "app/config"
+    mountPath: "secret"
+    namespace: ""  # Empty namespace = root namespace
+    kvVersion: "v2"
+    refreshInterval: "30m"
+    template:
+      data:
+        api_key: '{{ .apiKey }}'       # -> .work/secrets/root-api-key
+        api_secret: '{{ .apiSecret }}' # -> .work/secrets/root-api-secret
+    files:
+      - path: ".work/secrets/root-api-key"
+        mode: "0600"
+      - path: ".work/secrets/root-api-secret"
+        mode: "0600"

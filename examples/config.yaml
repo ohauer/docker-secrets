@@ -2,13 +2,15 @@ secretStore:
   address: "http://localhost:8200"
   authMethod: "token"
   token: "dev-root-token"
+  # namespace: ""  # Optional: OpenBao namespace (global default for all secrets)
 
 # Each secret defines:
 # 1. key - Path to the secret in Vault
 # 2. mountPath - KV secrets engine mount path
 # 3. kvVersion - KV engine version (v1 or v2)
-# 4. template.data - Map of keys to template expressions
-# 5. files - List of output files
+# 4. namespace - Optional: OpenBao namespace (overrides global namespace)
+# 5. template.data - Map of keys to template expressions
+# 6. files - List of output files
 # The mapping is positional: data keys are written to files in order
 #   - First key in template.data -> First file in files list
 #   - Second key in template.data -> Second file in files list

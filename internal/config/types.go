@@ -11,6 +11,7 @@ type Config struct {
 // SecretStore defines Vault/OpenBao connection settings
 type SecretStore struct {
 	Address    string `yaml:"address"`
+	Namespace  string `yaml:"namespace,omitempty"` // OpenBao namespace (optional)
 	AuthMethod string `yaml:"authMethod"`
 	Token      string `yaml:"token"`
 	RoleID     string `yaml:"roleId"`
@@ -29,6 +30,7 @@ type Secret struct {
 	Name            string        `yaml:"name"`
 	Key             string        `yaml:"key"`
 	MountPath       string        `yaml:"mountPath"`
+	Namespace       string        `yaml:"namespace,omitempty"` // OpenBao namespace override (optional)
 	KVVersion       string        `yaml:"kvVersion"`
 	RefreshInterval time.Duration `yaml:"refreshInterval"`
 	Template        Template      `yaml:"template"`
@@ -46,4 +48,13 @@ type File struct {
 	Mode  string `yaml:"mode"`
 	Owner string `yaml:"owner"`
 	Group string `yaml:"group"`
+}
+
+// ResolveNamespace returns the effective namespace for a secret
+// Per-secret namespace takes precedence over global namespace
+func (s *Secret) ResolveNamespace(globalNamespace string) string {
+	if s.Namespace != "" {
+		return s.Namespace
+	}
+	return globalNamespace
 }

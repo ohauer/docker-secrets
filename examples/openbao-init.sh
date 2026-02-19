@@ -29,7 +29,13 @@ log_message "Enabling KV v2 secrets engine..."
 docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" openbao-dev \
     bao secrets enable -version=2 -path=secret kv 2>/dev/null || log_message "KV engine already enabled"
 
-log_message "Creating test secrets..."
+log_message "Creating namespaces..."
+docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" openbao-dev \
+    bao namespace create team-a 2>/dev/null || log_message "Namespace team-a already exists"
+docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" openbao-dev \
+    bao namespace create team-b 2>/dev/null || log_message "Namespace team-b already exists"
+
+log_message "Creating test secrets in root namespace..."
 
 docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" openbao-dev \
     bao kv put secret/common/tls/example-cert \
@@ -50,6 +56,24 @@ docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" openba
     apiKey="api-key-12345" \
     apiSecret="api-secret-67890"
 
+log_message "Creating secrets in team-a namespace..."
+docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" -e BAO_NAMESPACE=team-a openbao-dev \
+    bao secrets enable -version=2 -path=secret kv 2>/dev/null || log_message "KV engine already enabled in team-a"
+
+docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" -e BAO_NAMESPACE=team-a openbao-dev \
+    bao kv put secret/app/config \
+    apiKey="team-a-api-key" \
+    apiSecret="team-a-secret"
+
+log_message "Creating secrets in team-b namespace..."
+docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" -e BAO_NAMESPACE=team-b openbao-dev \
+    bao secrets enable -version=2 -path=secret kv 2>/dev/null || log_message "KV engine already enabled in team-b"
+
+docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" -e BAO_NAMESPACE=team-b openbao-dev \
+    bao kv put secret/app/config \
+    apiKey="team-b-api-key" \
+    apiSecret="team-b-secret"
+
 log_message "Creating AppRole auth..."
 docker exec -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN="${BAO_TOKEN}" openbao-dev \
     bao auth enable approle 2>/dev/null || log_message "AppRole already enabled"
@@ -66,6 +90,18 @@ path "secret/data/*" {
   capabilities = ["read", "list"]
 }
 path "secret/metadata/*" {
+  capabilities = ["read", "list"]
+}
+path "team-a/secret/data/*" {
+  capabilities = ["read", "list"]
+}
+path "team-a/secret/metadata/*" {
+  capabilities = ["read", "list"]
+}
+path "team-b/secret/data/*" {
+  capabilities = ["read", "list"]
+}
+path "team-b/secret/metadata/*" {
   capabilities = ["read", "list"]
 }
 EOF
@@ -92,6 +128,10 @@ Test secrets created:
   - secret/common/tls/example-cert (tlsCrt, tlsKey)
   - secret/database/prod/credentials (username, password)
   - secret/app/config (apiKey, apiSecret)
+
+Namespaces created:
+  - team-a (with secret/app/config)
+  - team-b (with secret/app/config)
 EOF
 
 log_message "=========================================="

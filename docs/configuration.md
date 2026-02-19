@@ -55,6 +55,7 @@ secrets:
 
 ### Optional Fields
 
+- `namespace` - OpenBao namespace (global default for all secrets)
 - `kvVersion` - KV engine version (default: `v2`)
 - `mountPath` - KV mount path (default: `secret`)
 
@@ -75,6 +76,60 @@ secretStore:
   authMethod: "approle"
   roleId: "${VAULT_ROLE_ID}"
   secretId: "${VAULT_SECRET_ID}"
+```
+
+### OpenBao Namespace Support
+
+OpenBao namespaces allow logical partitioning of secrets within a single OpenBao instance.
+
+#### Global Namespace
+
+Set a global namespace that applies to all secrets:
+
+```yaml
+secretStore:
+  address: "https://openbao.example.com"
+  authMethod: "token"
+  token: "${VAULT_TOKEN}"
+  namespace: "team-a"  # All secrets use this namespace by default
+```
+
+#### Per-Secret Namespace Override
+
+Override the global namespace for specific secrets:
+
+```yaml
+secretStore:
+  address: "https://openbao.example.com"
+  authMethod: "token"
+  token: "${VAULT_TOKEN}"
+  namespace: "team-a"  # Global default
+
+secrets:
+  - name: "team-a-secret"
+    key: "app/config"
+    mountPath: "secret"
+    kvVersion: "v2"
+    # Uses global namespace (team-a)
+
+  - name: "team-b-secret"
+    key: "app/config"
+    mountPath: "secret"
+    namespace: "team-b"  # Overrides global namespace
+    kvVersion: "v2"
+```
+
+#### Root Namespace
+
+To access the root namespace when a global namespace is set, use an empty string:
+
+```yaml
+secretStore:
+  namespace: "team-a"  # Global default
+
+secrets:
+  - name: "root-secret"
+    namespace: ""  # Empty = root namespace
 ```
 
 ### TLS Configuration
@@ -137,9 +192,15 @@ secretStore:
 
 - `name` - Unique name for the secret
 - `path` - Path to secret in Vault (without mount path prefix)
+- `mountPath` - KV secrets engine mount path
+- `kvVersion` - KV engine version (`v1` or `v2`)
 - `refreshInterval` - How often to refresh (e.g., `30m`, `1h`, `24h`)
 - `template.data` - Map of template names to Go templates
 - `files` - List of output files
+
+### Optional Fields
+
+- `namespace` - OpenBao namespace (overrides global namespace from secretStore)
 
 ### Template Syntax
 
