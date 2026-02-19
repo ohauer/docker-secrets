@@ -25,6 +25,16 @@ secretStore:
   # OpenBao namespace (optional, global default for all secrets)
   # namespace: "team-a"
 
+  # Named credential sets (optional, for different teams/namespaces)
+  # credentials:
+  #   team-a:
+  #     authMethod: "token"
+  #     token: "${TEAM_A_TOKEN}"
+  #   team-b:
+  #     authMethod: "approle"
+  #     roleId: "${TEAM_B_ROLE_ID}"
+  #     secretId: "${TEAM_B_SECRET_ID}"
+
   # TLS Configuration (optional)
   # tlsCACert: "/certs/ca-bundle.pem"      # Custom CA certificate
   # tlsCAPath: "/etc/ssl/certs"            # CA certificate directory
@@ -38,6 +48,7 @@ secretStore:
 #   - mountPath: KV secrets engine mount path (e.g., "secret")
 #   - kvVersion: KV engine version - "v1" or "v2"
 #   - namespace: (optional) OpenBao namespace override
+#   - credentials: (optional) Named credential set to use
 #
 # KV v1 vs v2:
 #   - v1: Simple key-value store, no versioning, direct path access
@@ -46,6 +57,10 @@ secretStore:
 # Namespace precedence:
 #   - Per-secret namespace overrides global namespace
 #   - Empty namespace ("") means root namespace
+#
+# Credential precedence:
+#   - Per-secret credentials override default credentials
+#   - If not specified, uses default credentials from secretStore
 #
 # Template mapping:
 #   - First key in template.data -> First file in files list

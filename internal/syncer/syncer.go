@@ -12,28 +12,64 @@ import (
 	"github.com/ohauer/docker-secrets/internal/vault"
 )
 
+// ClientFactory creates Vault clients with specific credentials
+type ClientFactory func(creds config.CredentialSet) (*vault.Client, error)
+
 // SecretSyncer handles secret synchronization
 type SecretSyncer struct {
-	vaultClient *vault.Client
-	writer      *filewriter.Writer
-	retryConfig vault.RetryConfig
+	clientFactory ClientFactory
+	clientPool    map[string]*vault.Client // Cache clients by credential set name
+	writer        *filewriter.Writer
+	retryConfig   vault.RetryConfig
 }
 
-// NewSecretSyncer creates a new secret syncer
-func NewSecretSyncer(vaultClient *vault.Client, retryConfig vault.RetryConfig) *SecretSyncer {
+// NewSecretSyncer creates a new secret syncer with a client factory
+func NewSecretSyncer(factory ClientFactory, retryConfig vault.RetryConfig) *SecretSyncer {
 	return &SecretSyncer{
-		vaultClient: vaultClient,
-		writer:      filewriter.NewWriter(),
-		retryConfig: retryConfig,
+		clientFactory: factory,
+		clientPool:    make(map[string]*vault.Client),
+		writer:        filewriter.NewWriter(),
+		retryConfig:   retryConfig,
 	}
+}
+
+// getOrCreateClient returns a cached client or creates a new one
+func (s *SecretSyncer) getOrCreateClient(credName string, creds config.CredentialSet) (*vault.Client, error) {
+	// Check cache
+	if client, ok := s.clientPool[credName]; ok {
+		return client, nil
+	}
+
+	// Create new client
+	client, err := s.clientFactory(creds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client for credentials %q: %w", credName, err)
+	}
+
+	// Cache it
+	s.clientPool[credName] = client
+	return client, nil
 }
 
 // SyncSecret synchronizes a single secret
 func (s *SecretSyncer) SyncSecret(ctx context.Context, cfg *config.Config, secret config.Secret) error {
+	// Resolve credentials (per-secret overrides default)
+	credName := secret.ResolveCredentials()
+	creds, ok := cfg.SecretStore.GetCredentials(credName)
+	if !ok {
+		return fmt.Errorf("credentials %q not found", credName)
+	}
+
+	// Get or create client for these credentials
+	client, err := s.getOrCreateClient(credName, creds)
+	if err != nil {
+		return err
+	}
+
 	// Resolve namespace (per-secret overrides global)
 	namespace := secret.ResolveNamespace(cfg.SecretStore.Namespace)
 
-	data, err := s.vaultClient.FetchSecretWithRetry(
+	data, err := client.FetchSecretWithRetry(
 		ctx,
 		secret.MountPath,
 		secret.Key,

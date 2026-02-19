@@ -167,43 +167,48 @@ func run() error {
 		tlsConfig.SkipVerify = true
 	}
 
-	vaultClient, err := vault.NewClientWithTLS(cfg.SecretStore.Address, tlsConfig)
+	// Create client factory for on-demand client creation
+	clientFactory := func(creds config.CredentialSet) (*vault.Client, error) {
+		client, err := vault.NewClientWithTLS(cfg.SecretStore.Address, tlsConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		// Set up circuit breaker
+		client.WithCircuitBreaker(
+			vault.BreakerConfig{
+				MaxRequests: uint32(envCfg.CircuitBreakerMaxReqs),
+				Interval:    envCfg.CircuitBreakerInterval,
+				Timeout:     envCfg.CircuitBreakerTimeout,
+			},
+			func(from, to string) {
+				logger.Info("circuit breaker state changed",
+					zap.String("from", from),
+					zap.String("to", to),
+				)
+				metrics.SetCircuitBreakerState("vault-client", to)
+			},
+		)
+
+		// Authenticate with provided credentials
+		authConfig := vault.AuthConfig{
+			Method:   vault.AuthMethod(creds.AuthMethod),
+			Token:    creds.Token,
+			RoleID:   creds.RoleID,
+			SecretID: creds.SecretID,
+		}
+
+		if err := client.Authenticate(authConfig); err != nil {
+			return nil, err
+		}
+
+		return client, nil
+	}
+
+	// Create default client to verify connectivity
+	defaultCreds := cfg.SecretStore.GetDefaultCredentials()
+	_, err = clientFactory(defaultCreds)
 	if err != nil {
-		return err
-	}
-
-	// Set up circuit breaker
-	vaultClient.WithCircuitBreaker(
-		vault.BreakerConfig{
-			MaxRequests: uint32(envCfg.CircuitBreakerMaxReqs),
-			Interval:    envCfg.CircuitBreakerInterval,
-			Timeout:     envCfg.CircuitBreakerTimeout,
-		},
-		func(from, to string) {
-			logger.Info("circuit breaker state changed",
-				zap.String("from", from),
-				zap.String("to", to),
-			)
-			metrics.SetCircuitBreakerState("vault-client", to)
-		},
-	)
-
-	// Authenticate
-	authConfig := vault.AuthConfig{
-		Method: vault.AuthMethod(cfg.SecretStore.AuthMethod),
-	}
-
-	if cfg.SecretStore.Token != "" {
-		authConfig.Token = cfg.SecretStore.Token
-	}
-	if cfg.SecretStore.RoleID != "" {
-		authConfig.RoleID = cfg.SecretStore.RoleID
-	}
-	if cfg.SecretStore.SecretID != "" {
-		authConfig.SecretID = cfg.SecretStore.SecretID
-	}
-
-	if err := vaultClient.Authenticate(authConfig); err != nil {
 		return err
 	}
 
@@ -221,7 +226,7 @@ func run() error {
 		)
 	}
 
-	// Create syncer
+	// Create syncer with client factory
 	retryConfig := vault.RetryConfig{
 		InitialBackoff: envCfg.InitialBackoff,
 		MaxBackoff:     envCfg.MaxBackoff,
@@ -229,7 +234,7 @@ func run() error {
 		MaxRetries:     3,
 	}
 
-	secretSyncer := syncer.NewSecretSyncer(vaultClient, retryConfig)
+	secretSyncer := syncer.NewSecretSyncer(clientFactory, retryConfig)
 	scheduler := syncer.NewScheduler(secretSyncer)
 
 	// Set up health status

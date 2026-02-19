@@ -56,6 +56,7 @@ secrets:
 ### Optional Fields
 
 - `namespace` - OpenBao namespace (global default for all secrets)
+- `credentials` - Named credential sets for different teams/namespaces
 - `kvVersion` - KV engine version (default: `v2`)
 - `mountPath` - KV mount path (default: `secret`)
 
@@ -77,6 +78,45 @@ secretStore:
   roleId: "${VAULT_ROLE_ID}"
   secretId: "${VAULT_SECRET_ID}"
 ```
+
+### Named Credential Sets
+
+Use different credentials for different secrets/namespaces:
+
+```yaml
+secretStore:
+  address: "https://vault.example.com"
+
+  # Default credentials
+  authMethod: "token"
+  token: "${VAULT_TOKEN}"
+
+  # Named credential sets
+  credentials:
+    team-a:
+      authMethod: "token"
+      token: "${TEAM_A_TOKEN}"
+    team-b:
+      authMethod: "approle"
+      roleId: "${TEAM_B_ROLE_ID}"
+      secretId: "${TEAM_B_SECRET_ID}"
+
+secrets:
+  - name: "default-secret"
+    # Uses default credentials
+
+  - name: "team-a-secret"
+    credentials: "team-a"  # Uses team-a credentials
+
+  - name: "team-b-secret"
+    credentials: "team-b"  # Uses team-b credentials
+```
+
+**How it works:**
+- Each credential set creates a separate authenticated Vault client
+- Clients are cached and reused for efficiency
+- If a secret doesn't specify `credentials`, it uses the default credentials
+- Useful for multi-tenant environments or different namespace permissions
 
 ### OpenBao Namespace Support
 
@@ -201,6 +241,7 @@ secretStore:
 ### Optional Fields
 
 - `namespace` - OpenBao namespace (overrides global namespace from secretStore)
+- `credentials` - Named credential set to use (overrides default credentials)
 
 ### Template Syntax
 

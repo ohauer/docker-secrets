@@ -14,6 +14,23 @@ import (
 	"github.com/ohauer/docker-secrets/internal/vault"
 )
 
+// createTestFactory creates a client factory for testing
+func createTestFactory(client *vault.Client) ClientFactory {
+	return func(creds config.CredentialSet) (*vault.Client, error) {
+		return client, nil
+	}
+}
+
+// createTestConfig creates a test config with default credentials
+func createTestConfig() *config.Config {
+	return &config.Config{
+		SecretStore: config.SecretStore{
+			AuthMethod: "token",
+			Token:      "test-token",
+		},
+	}
+}
+
 func TestSyncSecret_Success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -40,12 +57,10 @@ func TestSyncSecret_Success(t *testing.T) {
 		MaxRetries:     3,
 	}
 
-	syncer := NewSecretSyncer(client, retryConfig)
+	syncer := NewSecretSyncer(createTestFactory(client), retryConfig)
 
 	tmpDir := t.TempDir()
-	cfg := &config.Config{
-		SecretStore: config.SecretStore{},
-	}
+	cfg := createTestConfig()
 
 	secret := config.Secret{
 		Name:      "test-secret",
@@ -111,13 +126,13 @@ func TestScheduler_AddSecret(t *testing.T) {
 		MaxRetries:     3,
 	}
 
-	syncer := NewSecretSyncer(client, retryConfig)
+	syncer := NewSecretSyncer(createTestFactory(client), retryConfig)
 	scheduler := NewScheduler(syncer)
 	defer scheduler.Stop()
 
 	tmpDir := t.TempDir()
 	cfg := &config.Config{
-		SecretStore: config.SecretStore{},
+		SecretStore: config.SecretStore{AuthMethod: "token", Token: "test-token"},
 	}
 
 	secret := config.Secret{
@@ -178,13 +193,13 @@ func TestScheduler_PeriodicSync(t *testing.T) {
 		MaxRetries:     3,
 	}
 
-	syncer := NewSecretSyncer(client, retryConfig)
+	syncer := NewSecretSyncer(createTestFactory(client), retryConfig)
 	scheduler := NewScheduler(syncer)
 	defer scheduler.Stop()
 
 	tmpDir := t.TempDir()
 	cfg := &config.Config{
-		SecretStore: config.SecretStore{},
+		SecretStore: config.SecretStore{AuthMethod: "token", Token: "test-token"},
 	}
 
 	secret := config.Secret{
@@ -238,13 +253,13 @@ func TestScheduler_RemoveSecret(t *testing.T) {
 		MaxRetries:     3,
 	}
 
-	syncer := NewSecretSyncer(client, retryConfig)
+	syncer := NewSecretSyncer(createTestFactory(client), retryConfig)
 	scheduler := NewScheduler(syncer)
 	defer scheduler.Stop()
 
 	tmpDir := t.TempDir()
 	cfg := &config.Config{
-		SecretStore: config.SecretStore{},
+		SecretStore: config.SecretStore{AuthMethod: "token", Token: "test-token"},
 	}
 
 	secret := config.Secret{

@@ -17,6 +17,9 @@ type SecretStore struct {
 	RoleID     string `yaml:"roleId"`
 	SecretID   string `yaml:"secretId"`
 
+	// Named credential sets for different namespaces/teams
+	Credentials map[string]CredentialSet `yaml:"credentials,omitempty"`
+
 	// TLS Configuration
 	TLSSkipVerify bool   `yaml:"tlsSkipVerify,omitempty"` // Skip TLS verification (insecure)
 	TLSCACert     string `yaml:"tlsCACert,omitempty"`     // Path to CA certificate file
@@ -25,12 +28,21 @@ type SecretStore struct {
 	TLSClientKey  string `yaml:"tlsClientKey,omitempty"`  // Path to client key
 }
 
+// CredentialSet defines authentication credentials
+type CredentialSet struct {
+	AuthMethod string `yaml:"authMethod"`
+	Token      string `yaml:"token,omitempty"`
+	RoleID     string `yaml:"roleId,omitempty"`
+	SecretID   string `yaml:"secretId,omitempty"`
+}
+
 // Secret defines a single secret to sync
 type Secret struct {
 	Name            string        `yaml:"name"`
 	Key             string        `yaml:"key"`
 	MountPath       string        `yaml:"mountPath"`
-	Namespace       string        `yaml:"namespace,omitempty"` // OpenBao namespace override (optional)
+	Namespace       string        `yaml:"namespace,omitempty"`   // OpenBao namespace override (optional)
+	Credentials     string        `yaml:"credentials,omitempty"` // Named credential set (optional)
 	KVVersion       string        `yaml:"kvVersion"`
 	RefreshInterval time.Duration `yaml:"refreshInterval"`
 	Template        Template      `yaml:"template"`
@@ -57,4 +69,29 @@ func (s *Secret) ResolveNamespace(globalNamespace string) string {
 		return s.Namespace
 	}
 	return globalNamespace
+}
+
+// ResolveCredentials returns the effective credentials for a secret
+// Returns credential set name (empty string means use default credentials)
+func (s *Secret) ResolveCredentials() string {
+	return s.Credentials
+}
+
+// GetDefaultCredentials returns default credentials from SecretStore
+func (ss *SecretStore) GetDefaultCredentials() CredentialSet {
+	return CredentialSet{
+		AuthMethod: ss.AuthMethod,
+		Token:      ss.Token,
+		RoleID:     ss.RoleID,
+		SecretID:   ss.SecretID,
+	}
+}
+
+// GetCredentials returns credentials by name, or default if name is empty
+func (ss *SecretStore) GetCredentials(name string) (CredentialSet, bool) {
+	if name == "" {
+		return ss.GetDefaultCredentials(), true
+	}
+	creds, ok := ss.Credentials[name]
+	return creds, ok
 }

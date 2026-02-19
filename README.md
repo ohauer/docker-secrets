@@ -324,6 +324,7 @@ OTEL_EXPORTER_ENDPOINT=http://jaeger:4318
 - [Vault Development Environment](docker-compose.vault.yml)
 - [OpenBao Development Environment](docker-compose.openbao.yml)
 - [OpenBao with Namespaces](examples/config-openbao-namespaces.yaml)
+- [Named Credential Sets](examples/config-credential-sets.yaml)
 - [Example Configurations](examples/)
 
 ## Documentation

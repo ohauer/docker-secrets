@@ -32,7 +32,7 @@ func Validate(cfg *Config) error {
 	}
 
 	for i, secret := range cfg.Secrets {
-		if err := validateSecret(&secret); err != nil {
+		if err := validateSecret(&cfg.SecretStore, &secret); err != nil {
 			return fmt.Errorf("secrets[%d]: %w", i, err)
 		}
 	}
@@ -68,6 +68,13 @@ func validateSecretStore(store *SecretStore) error {
 		}
 	default:
 		return fmt.Errorf("unsupported authMethod: %s (supported: token, approle)", store.AuthMethod)
+	}
+
+	// Validate credential sets
+	for name, creds := range store.Credentials {
+		if err := validateCredentialSet(name, creds); err != nil {
+			return fmt.Errorf("credentials[%s]: %w", name, err)
+		}
 	}
 
 	// Validate TLS configuration
@@ -108,6 +115,35 @@ func validateSecretStore(store *SecretStore) error {
 	return nil
 }
 
+// validateCredentialSet validates a named credential set
+func validateCredentialSet(name string, creds CredentialSet) error {
+	if name == "" {
+		return fmt.Errorf("credential set name cannot be empty")
+	}
+
+	if creds.AuthMethod == "" {
+		return fmt.Errorf("authMethod is required")
+	}
+
+	switch creds.AuthMethod {
+	case "token":
+		if creds.Token == "" {
+			return fmt.Errorf("token is required for token auth")
+		}
+	case "approle":
+		if creds.RoleID == "" {
+			return fmt.Errorf("roleId is required for approle auth")
+		}
+		if creds.SecretID == "" {
+			return fmt.Errorf("secretId is required for approle auth")
+		}
+	default:
+		return fmt.Errorf("unsupported authMethod: %s (supported: token, approle)", creds.AuthMethod)
+	}
+
+	return nil
+}
+
 // validateVaultAddress validates the Vault address is a valid URL
 func validateVaultAddress(address string) error {
 	u, err := url.Parse(address)
@@ -130,7 +166,7 @@ func validateVaultAddress(address string) error {
 	return nil
 }
 
-func validateSecret(secret *Secret) error {
+func validateSecret(store *SecretStore, secret *Secret) error {
 	if secret.Name == "" {
 		return fmt.Errorf("name is required")
 	}
@@ -141,6 +177,13 @@ func validateSecret(secret *Secret) error {
 
 	if secret.MountPath == "" {
 		return fmt.Errorf("mountPath is required")
+	}
+
+	// Validate credential reference if specified
+	if secret.Credentials != "" {
+		if _, ok := store.Credentials[secret.Credentials]; !ok {
+			return fmt.Errorf("credentials %q not found in secretStore.credentials", secret.Credentials)
+		}
 	}
 
 	if secret.KVVersion == "" {
