@@ -11,7 +11,7 @@ import (
 type SecretData map[string]interface{}
 
 // FetchSecret fetches a secret from Vault KV v1 or v2
-func (c *Client) FetchSecret(mountPath, secretPath, kvVersion string) (SecretData, error) {
+func (c *Client) FetchSecret(mountPath, secretPath, kvVersion, namespace string) (SecretData, error) {
 	var fullPath string
 	if kvVersion == "v2" {
 		fullPath = path.Join(mountPath, "data", secretPath)
@@ -20,6 +20,10 @@ func (c *Client) FetchSecret(mountPath, secretPath, kvVersion string) (SecretDat
 	}
 
 	result, err := c.executeWithBreaker(func() (interface{}, error) {
+		// Set namespace if provided
+		if namespace != "" {
+			c.client.SetNamespace(namespace)
+		}
 		return c.client.Logical().Read(fullPath)
 	})
 	if err != nil {

@@ -22,6 +22,9 @@ secretStore:
   # roleId: "${VAULT_ROLE_ID}"
   # secretId: "${VAULT_SECRET_ID}"
 
+  # OpenBao namespace (optional, global default for all secrets)
+  # namespace: "team-a"
+
   # TLS Configuration (optional)
   # tlsCACert: "/certs/ca-bundle.pem"      # Custom CA certificate
   # tlsCAPath: "/etc/ssl/certs"            # CA certificate directory
@@ -34,10 +37,15 @@ secretStore:
 #   - key: Path to the secret in Vault (e.g., "app/database/credentials")
 #   - mountPath: KV secrets engine mount path (e.g., "secret")
 #   - kvVersion: KV engine version - "v1" or "v2"
+#   - namespace: (optional) OpenBao namespace override
 #
 # KV v1 vs v2:
 #   - v1: Simple key-value store, no versioning, direct path access
 #   - v2: Versioned secrets with metadata, path includes /data/ prefix (handled automatically)
+#
+# Namespace precedence:
+#   - Per-secret namespace overrides global namespace
+#   - Empty namespace ("") means root namespace
 #
 # Template mapping:
 #   - First key in template.data -> First file in files list
@@ -51,6 +59,7 @@ secrets:
     mountPath: "secret"
     kvVersion: "v2"
     refreshInterval: "30m"
+    # namespace: ""  # Optional: override global namespace
     template:
       data:
         tls.crt: '{{ .tlsCrt }}'   # -> /secrets/tls.crt

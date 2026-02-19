@@ -30,11 +30,15 @@ func NewSecretSyncer(vaultClient *vault.Client, retryConfig vault.RetryConfig) *
 
 // SyncSecret synchronizes a single secret
 func (s *SecretSyncer) SyncSecret(ctx context.Context, cfg *config.Config, secret config.Secret) error {
+	// Resolve namespace (per-secret overrides global)
+	namespace := secret.ResolveNamespace(cfg.SecretStore.Namespace)
+
 	data, err := s.vaultClient.FetchSecretWithRetry(
 		ctx,
 		secret.MountPath,
 		secret.Key,
 		secret.KVVersion,
+		namespace,
 		s.retryConfig,
 	)
 	if err != nil {

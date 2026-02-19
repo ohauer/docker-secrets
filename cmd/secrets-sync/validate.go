@@ -15,6 +15,9 @@ func validateConfig(configFile string) error {
 
 	fmt.Printf("✓ Configuration is valid\n")
 	fmt.Printf("  Vault address: %s\n", cfg.SecretStore.Address)
+	if cfg.SecretStore.Namespace != "" {
+		fmt.Printf("  Namespace:     %s\n", cfg.SecretStore.Namespace)
+	}
 	fmt.Printf("  Auth method:   %s\n", cfg.SecretStore.AuthMethod)
 	fmt.Printf("  Secrets:       %d configured\n", len(cfg.Secrets))
 

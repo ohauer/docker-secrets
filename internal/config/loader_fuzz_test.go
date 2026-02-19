@@ -25,6 +25,27 @@ secrets:
         mode: "0600"
 `))
 
+	// Seed with namespace
+	f.Add([]byte(`secretStore:
+  address: "http://localhost:8200"
+  namespace: "team-a"
+  authMethod: "token"
+  token: "test"
+secrets:
+  - name: "test"
+    key: "secret/data/test"
+    mountPath: "secret"
+    namespace: "team-b"
+    kvVersion: "v2"
+    refreshInterval: "30m"
+    template:
+      data:
+        test: '{{ .value }}'
+    files:
+      - path: "/tmp/test"
+        mode: "0600"
+`))
+
 	// Seed with edge cases
 	f.Add([]byte(`{}`))
 	f.Add([]byte(``))

@@ -251,6 +251,7 @@ func validateFilePath(path string) error {
 // ExpandEnvVars expands environment variables in configuration
 func ExpandEnvVars(cfg *Config) {
 	cfg.SecretStore.Address = expandEnv(cfg.SecretStore.Address)
+	cfg.SecretStore.Namespace = expandEnv(cfg.SecretStore.Namespace)
 	cfg.SecretStore.Token = expandEnv(cfg.SecretStore.Token)
 	cfg.SecretStore.RoleID = expandEnv(cfg.SecretStore.RoleID)
 	cfg.SecretStore.SecretID = expandEnv(cfg.SecretStore.SecretID)
@@ -258,6 +259,10 @@ func ExpandEnvVars(cfg *Config) {
 	cfg.SecretStore.TLSCAPath = expandEnv(cfg.SecretStore.TLSCAPath)
 	cfg.SecretStore.TLSClientCert = expandEnv(cfg.SecretStore.TLSClientCert)
 	cfg.SecretStore.TLSClientKey = expandEnv(cfg.SecretStore.TLSClientKey)
+
+	for i := range cfg.Secrets {
+		cfg.Secrets[i].Namespace = expandEnv(cfg.Secrets[i].Namespace)
+	}
 }
 
 func expandEnv(s string) string {

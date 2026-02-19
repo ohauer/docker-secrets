@@ -31,7 +31,7 @@ func TestFetchSecret_Success(t *testing.T) {
 		t.Fatalf("failed to create client: %v", err)
 	}
 
-	data, err := client.FetchSecret("secret", "test/path", "v2")
+	data, err := client.FetchSecret("secret", "test/path", "v2", "")
 	if err != nil {
 		t.Fatalf("failed to fetch secret: %v", err)
 	}
@@ -56,7 +56,7 @@ func TestFetchSecret_NotFound(t *testing.T) {
 		t.Fatalf("failed to create client: %v", err)
 	}
 
-	_, err = client.FetchSecret("secret", "nonexistent", "v2")
+	_, err = client.FetchSecret("secret", "nonexistent", "v2", "")
 	if err == nil {
 		t.Error("expected error for nonexistent secret, got nil")
 	}
@@ -94,7 +94,7 @@ func TestFetchSecretWithRetry_Success(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	data, err := client.FetchSecretWithRetry(ctx, "secret", "test/path", "v2", config)
+	data, err := client.FetchSecretWithRetry(ctx, "secret", "test/path", "v2", "", config)
 	if err != nil {
 		t.Fatalf("failed to fetch secret with retry: %v", err)
 	}
@@ -127,7 +127,7 @@ func TestFetchSecretWithRetry_MaxRetriesExceeded(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, err = client.FetchSecretWithRetry(ctx, "secret", "test/path", "v2", config)
+	_, err = client.FetchSecretWithRetry(ctx, "secret", "test/path", "v2", "", config)
 	if err == nil {
 		t.Error("expected error after max retries, got nil")
 	}
@@ -154,7 +154,7 @@ func TestFetchSecretWithRetry_ContextCancelled(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 
-	_, err = client.FetchSecretWithRetry(ctx, "secret", "test/path", "v2", config)
+	_, err = client.FetchSecretWithRetry(ctx, "secret", "test/path", "v2", "", config)
 	if err == nil {
 		t.Error("expected error for cancelled context, got nil")
 	}
@@ -182,7 +182,7 @@ func TestFetchSecretWithRetry_ExponentialBackoff(t *testing.T) {
 
 	ctx := context.Background()
 	start := time.Now()
-	_, _ = client.FetchSecretWithRetry(ctx, "secret", "test/path", "v2", config)
+	_, _ = client.FetchSecretWithRetry(ctx, "secret", "test/path", "v2", "", config)
 	elapsed := time.Since(start)
 
 	if elapsed < 10*time.Millisecond {
@@ -215,7 +215,7 @@ func TestFetchSecret_V1_Success(t *testing.T) {
 		t.Fatalf("failed to create client: %v", err)
 	}
 
-	data, err := client.FetchSecret("secret", "test/path", "v1")
+	data, err := client.FetchSecret("secret", "test/path", "v1", "")
 	if err != nil {
 		t.Fatalf("failed to fetch secret: %v", err)
 	}
@@ -243,7 +243,7 @@ func TestFetchSecret_V1_PathConstruction(t *testing.T) {
 		t.Fatalf("failed to create client: %v", err)
 	}
 
-	_, _ = client.FetchSecret("secret", "test/path", "v1")
+	_, _ = client.FetchSecret("secret", "test/path", "v1", "")
 
 	expectedPath := "/v1/secret/test/path"
 	if requestedPath != expectedPath {
@@ -265,7 +265,7 @@ func TestFetchSecret_V2_PathConstruction(t *testing.T) {
 		t.Fatalf("failed to create client: %v", err)
 	}
 
-	_, _ = client.FetchSecret("secret", "test/path", "v2")
+	_, _ = client.FetchSecret("secret", "test/path", "v2", "")
 
 	expectedPath := "/v1/secret/data/test/path"
 	if requestedPath != expectedPath {
