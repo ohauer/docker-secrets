@@ -15,6 +15,7 @@ Continuously syncs secrets from HashiCorp Vault or OpenBao to the filesystem wit
 - 🔧 **Hot Reload** - Configuration changes without restart
 - 🐳 **Minimal Image** - FROM scratch, <20MB, runs as non-root
 - ✅ **Health Checks** - Built-in healthcheck for docker-compose and Kubernetes
+- ⚡ **Go 1.26** - Benefits from Green Tea GC (10-40% less GC overhead) and improved performance
 
 ## Quick Start
 

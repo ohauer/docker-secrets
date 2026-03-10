@@ -1,4 +1,4 @@
-.PHONY: help all build test fuzz lint clean install-systemd uninstall-systemd
+.PHONY: help all build test fuzz lint clean install-systemd uninstall-systemd test-leaks
 
 BINARY_NAME=secrets-sync
 BUILD_DIR=bin
@@ -18,6 +18,7 @@ help:
 	@echo "  build            - Build the binary"
 	@echo "  build-static     - Build static binary for container"
 	@echo "  test             - Run tests"
+	@echo "  test-leaks       - Run tests with goroutine leak detection (Go 1.26+)"
 	@echo "  fuzz             - Run fuzz tests (10s per test)"
 	@echo "  coverage         - Generate coverage report"
 	@echo "  lint             - Run linter"
@@ -43,6 +44,10 @@ build-static:
 
 test:
 	$(GO) test -v -race -coverprofile=coverage.out ./...
+
+test-leaks:
+	@echo "Running tests with goroutine leak detection (Go 1.26+)..."
+	GOEXPERIMENT=goroutineleakprofile $(GO) test -v -race ./...
 
 fuzz:
 	@echo "Running fuzz tests (10s each)..."
