@@ -3,6 +3,7 @@ package syncer
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"sort"
 	"time"
 
@@ -104,7 +105,20 @@ func (s *SecretSyncer) SyncSecret(ctx context.Context, cfg *config.Config, secre
 	}
 	sort.Strings(templateNames)
 
-	for i, file := range secret.Files {
+	// Map file paths to template names by basename
+	fileToTemplate := make(map[string]string)
+	for _, templateName := range templateNames {
+		// Match template name to file by basename
+		for _, file := range secret.Files {
+			basename := filepath.Base(file.Path)
+			if basename == templateName {
+				fileToTemplate[file.Path] = templateName
+				break
+			}
+		}
+	}
+
+	for _, file := range secret.Files {
 		mode, err := filewriter.ParseMode(file.Mode)
 		if err != nil {
 			return fmt.Errorf("invalid mode for file %s: %w", file.Path, err)
@@ -120,10 +134,12 @@ func (s *SecretSyncer) SyncSecret(ctx context.Context, cfg *config.Config, secre
 			return fmt.Errorf("invalid group for file %s: %w", file.Path, err)
 		}
 
-		var content string
-		if i < len(templateNames) {
-			content = rendered[templateNames[i]]
+		// Get content from rendered template
+		templateName, ok := fileToTemplate[file.Path]
+		if !ok {
+			return fmt.Errorf("no template found for file %s", file.Path)
 		}
+		content := rendered[templateName]
 
 		fileConfig := filewriter.FileConfig{
 			Path:  file.Path,

@@ -78,15 +78,13 @@ fi
 PASSWORD=$(cat "$TEST_DIR/secrets/password.txt")
 API_KEY=$(cat "$TEST_DIR/secrets/api_key.txt")
 
-# Note: There's a known issue where template data keys map to files in order,
-# not by name. This will be fixed in a future update.
-if [ "$PASSWORD" != "abc123" ]; then
-  echo "❌ FAIL: password mismatch (expected: abc123, got: $PASSWORD)"
+if [ "$PASSWORD" != "test123" ]; then
+  echo "❌ FAIL: password mismatch (expected: test123, got: $PASSWORD)"
   exit 1
 fi
 
-if [ "$API_KEY" != "test123" ]; then
-  echo "❌ FAIL: api_key mismatch (expected: test123, got: $API_KEY)"
+if [ "$API_KEY" != "abc123" ]; then
+  echo "❌ FAIL: api_key mismatch (expected: abc123, got: $API_KEY)"
   exit 1
 fi
 
