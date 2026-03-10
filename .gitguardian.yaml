@@ -1,0 +1,22 @@
+# GitGuardian configuration
+# https://docs.gitguardian.com/internal-repositories-monitoring/integrations/git_hooks/pre_commit
+
+version: 2
+
+# Paths to exclude from scanning
+paths-ignore:
+  - test/manual/certs/**
+  - test/integration/**/*.pem
+  - test/integration/**/*.key
+  - "**/*_test.go"  # Test files may contain test credentials
+  - "**/testdata/**"
+
+# Specific patterns to ignore
+matches-ignore:
+  - name: Test certificates
+    match: test/manual/certs/
+  - name: Integration test fixtures
+    match: test/integration/
+
+# Minimum occurrences before alerting (reduce noise)
+minimum-occurrences: 2
