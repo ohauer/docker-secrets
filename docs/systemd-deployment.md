@@ -15,7 +15,7 @@ Running secrets-sync as a systemd service provides:
 
 - Linux system with systemd (most modern distributions)
 - Root access for installation
-- Go 1.25.6+ (for building from source)
+- Go 1.26.1+ (for building from source)
 
 ## Quick Installation
 
