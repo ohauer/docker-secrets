@@ -1,4 +1,4 @@
-.PHONY: help all build test fuzz lint clean install-systemd uninstall-systemd test-leaks test-integration test-manual test-all
+.PHONY: help all build test fuzz lint clean install-systemd uninstall-systemd test-leaks test-integration test-manual test-all docker-build docker-build-reload docker-run docker-test
 
 BINARY_NAME=secrets-sync
 BUILD_DIR=bin
@@ -30,6 +30,7 @@ help:
 	@echo "  clean            - Remove build artifacts"
 	@echo "  run              - Run the application"
 	@echo "  docker-build     - Build Docker image"
+	@echo "  docker-build-reload - Build reload-sidecar Docker image"
 	@echo "  docker-run       - Run Docker container"
 	@echo "  docker-test      - Test Docker container"
 	@echo "  install-systemd  - Install as systemd service (requires root)"
@@ -97,6 +98,9 @@ run:
 
 docker-build:
 	docker build -t secrets-sync:latest .
+
+docker-build-reload:
+	docker build -t secrets-sync:reload -f reload-sidecar/Dockerfile reload-sidecar/
 
 docker-run:
 	docker run --rm secrets-sync:latest
