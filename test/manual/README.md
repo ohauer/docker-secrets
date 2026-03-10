@@ -15,10 +15,13 @@ Use this environment for:
 ## Quick Start
 
 ```bash
-# 1. Start Vault
+# 1. (Optional) Generate test certificates for TLS testing
+./generate-certs.sh
+
+# 2. Start Vault
 docker compose -f ../../docker-compose.vault.yml up -d
 
-# 2. Initialize with test secrets
+# 3. Initialize with test secrets
 ./setup-vault.sh
 
 # 3. Run the tool

@@ -34,7 +34,8 @@ test-run/
 # Test working directories
 test/manual/.work/
 test/manual/secrets/
-test/manual/certs/
+test/manual/certs/*.pem
+test/manual/certs/*.key
 test/integration/.work/
 
 # Working directories (generated files)
