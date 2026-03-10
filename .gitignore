@@ -31,6 +31,11 @@ Thumbs.db
 # Test run directory
 test-run/
 
+# Test working directories
+test/manual/.work/
+test/manual/secrets/
+test/integration/.work/
+
 # Working directories (generated files)
 examples/.work/
 .work/

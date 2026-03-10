@@ -1,205 +1,70 @@
 # Examples
 
-This directory contains example configurations and scripts for testing secrets-sync.
+User-facing configuration examples for secrets-sync.
+
+## Configuration Examples
+
+### Basic Configuration
+- `config.yaml` - Simple token authentication
+- `config-credential-sets.yaml` - Multiple credential sets for multi-tenant
+- `config-openbao-namespaces.yaml` - OpenBao with namespace support
+
+### Docker Compose
+- `docker-compose.sidecar.yml` - Sidecar pattern with Vault and application
+
+### Systemd
+- `systemd/secrets-sync.service` - Systemd service file
 
 ## Quick Start
 
-### Option 1: Standalone Testing
-
-Test the tool directly with Vault:
-
+### 1. Copy Example Config
 ```bash
-# 1. Build the binary
-make build -C ..
-
-# 2. Initialize Vault with test secrets
-cd examples
-./vault-init.sh
-
-# 3. Run secrets-sync
-mkdir -p .work/secrets
-CONFIG_FILE=config.yaml ../bin/secrets-sync
-
-# 4. Verify secrets (in another terminal)
-ls -la .work/secrets/
-cat .work/secrets/db-username
+cp examples/config.yaml my-config.yaml
 ```
 
-### Option 2: Docker Sidecar Pattern
-
-Run the complete sidecar example with docker-compose:
-
-```bash
-# 1. Build docker image
-make docker-build -C ..
-
-# 2. Start the sidecar example
-docker compose -f docker-compose.sidecar.yml up
-
-# This starts:
-# - Vault (internal: 8200, external: 8202)
-# - Secrets sidecar (syncs secrets)
-# - Nginx app (uses synced secrets)
-```
-
-Note: The sidecar example includes its own Vault instance and needs to be initialized separately. See "Sidecar Example Setup" below.
-
-## Working Directory
-
-All generated files are stored in `examples/.work/`:
-- `.work/secrets/` - Synced secret files
-- `.work/vault-credentials.txt` - Vault credentials
-- `.work/openbao-credentials.txt` - OpenBao credentials
-
-This directory is gitignored to keep the repository clean.
-
-## Port Reference
-
-Different docker-compose files use different ports to avoid conflicts:
-
-| Service | Docker Compose File | Internal Port | External Port | Access From Host |
-|---------|-------------------|---------------|---------------|------------------|
-| Vault (dev) | `docker-compose.vault.yml` | 8200 | 8200 | `http://localhost:8200` |
-| Vault (sidecar) | `docker-compose.sidecar.yml` | 8200 | 8202 | `http://localhost:8202` |
-| OpenBao | `docker-compose.openbao.yml` | 8200 | 8300 | `http://localhost:8300` |
-
-**When to use which port:**
-- **Inside container** (`docker exec`): Always use 8200
-- **From host machine**: Use the external port (8200, 8202, or 8300)
-- **Between containers**: Use service name and internal port (e.g., `http://vault:8200`)
-
-## Files
-
-### Scripts
-
-- `vault-init.sh` - Initialize Vault (port 8200) with test secrets
-- `openbao-init.sh` - Initialize OpenBao (port 8300) with test secrets
-- `test-examples-vault.sh` - End-to-end test with Vault
-- `test-examples-openbao.sh` - End-to-end test with OpenBao
-
-### Configuration
-
-- `config.yaml` - Example configuration for secrets-sync
-- `docker-compose.sidecar.yml` - Sidecar pattern example
-
-## Sidecar Example Setup
-
-The docker-compose.sidecar.yml includes its own Vault instance (internal port 8200, exposed as 8202). To use it:
-
-```bash
-# Start services
-docker compose -f docker-compose.sidecar.yml up -d
-
-# Initialize Vault in the sidecar (use internal port 8200 with docker exec)
-docker exec -e VAULT_ADDR=http://127.0.0.1:8200 -e VAULT_TOKEN=dev-root-token vault-sidecar \
-  vault kv put secret/common/tls/example-cert tlsCrt="cert-data" tlsKey="key-data"
-
-docker exec -e VAULT_ADDR=http://127.0.0.1:8200 -e VAULT_TOKEN=dev-root-token vault-sidecar \
-  vault kv put secret/database/prod/credentials username="dbuser" password="dbpass123"
-
-docker exec -e VAULT_ADDR=http://127.0.0.1:8200 -e VAULT_TOKEN=dev-root-token vault-sidecar \
-  vault kv put secret/app/config apiKey="api-key" apiSecret="api-secret"
-
-# Restart sidecar to sync secrets
-docker compose -f docker-compose.sidecar.yml restart secrets-sidecar
-
-# Check logs
-docker logs -f secrets-sidecar
-```
-
-**Note**: Use port 8200 with `docker exec` (inside container) or port 8202 from your host machine.
-
-## OpenBao Alternative
-
-To use OpenBao instead of Vault:
-
-```bash
-./openbao-init.sh
-```
-
-OpenBao runs on port 8300 (to avoid conflicts with Vault on 8200). You'll need to create a separate config file or use the test script:
-
-```bash
-# Run the OpenBao test (creates config automatically)
-./test-examples-openbao.sh
-```
-
-## Automated Testing
-
-Two test scripts are provided to verify the complete workflow:
-
-```bash
-# Test with Vault (port 8200)
-./test-examples-vault.sh
-
-# Test with OpenBao (port 8300)
-./test-examples-openbao.sh
-```
-
-These scripts:
-- Start the secret backend
-- Initialize with test secrets
-- Build the binary
-- Run secrets-sync
-- Verify synced secrets
-- Clean up automatically
-
-## Test Secrets
-
-Both Vault and OpenBao are initialized with:
-
-### TLS Certificate
-- **Path**: `secret/common/tls/example-cert`
-- **Fields**: `tlsCrt`, `tlsKey`
-
-### Database Credentials
-- **Path**: `secret/database/prod/credentials`
-- **Fields**: `username`, `password`
-
-### Application Config
-- **Path**: `secret/app/config`
-- **Fields**: `apiKey`, `apiSecret`
-
-## Authentication
-
-### Token Authentication (Default)
+### 2. Edit Configuration
 ```yaml
 secretStore:
+  address: "https://vault.example.com"
   authMethod: "token"
-  token: "dev-root-token"
+  token: "${VAULT_TOKEN}"
+
+secrets:
+  - name: "my-secret"
+    key: "path/to/secret"
+    mountPath: "secret"
+    kvVersion: "v2"
+    files:
+      - path: "/secrets/my-secret.txt"
+        mode: "0600"
 ```
 
-### AppRole Authentication
-Get credentials from `.work/vault-credentials.txt` or `.work/openbao-credentials.txt`:
-
-```yaml
-secretStore:
-  authMethod: "approle"
-  roleId: "${VAULT_ROLE_ID}"
-  secretId: "${VAULT_SECRET_ID}"
+### 3. Run
+```bash
+export VAULT_TOKEN=your-token
+./bin/secrets-sync --config my-config.yaml
 ```
 
-## Cleanup
+## Docker Sidecar Pattern
+
+See `docker-compose.sidecar.yml` for a complete example of running secrets-sync as a sidecar container.
 
 ```bash
-# Stop sidecar example
-docker compose -f ../docker-compose.sidecar.yml down
-
-# Stop Vault
-docker compose -f ../docker-compose.vault.yml down
-
-# Stop OpenBao
-docker compose -f ../docker-compose.openbao.yml down
-
-# Remove working directory
-rm -rf ./.work
+docker compose -f examples/docker-compose.sidecar.yml up
 ```
 
-## Notes
+## Systemd Service
 
-⚠️ **WARNING**: These are development examples only. Never use dev mode or these tokens in production!
+See [Systemd Deployment Guide](../docs/systemd-deployment.md) for installation instructions.
 
-- Dev mode stores data in memory (lost on restart)
-- Root tokens have unlimited access
-- TLS is disabled in these examples
-- Secrets are stored in plaintext files
+## Testing
+
+For testing and development, see:
+- `test/manual/` - Manual testing environment
+- `test/integration/` - Automated integration tests
+
+## Documentation
+
+- [Configuration Reference](../docs/configuration.md)
+- [Environment Variables](../docs/environment-variables.md)
+- [Troubleshooting](../docs/troubleshooting.md)

@@ -7,7 +7,7 @@ import (
 )
 
 func TestNewClient(t *testing.T) {
-	client, err := NewClient("http://localhost:8200")
+	client, err := NewClient(TestVaultAddr)
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -69,7 +69,7 @@ func TestClient_AuthenticateToken_Success(t *testing.T) {
 }
 
 func TestClient_AuthenticateToken_Empty(t *testing.T) {
-	client, err := NewClient("http://localhost:8200")
+	client, err := NewClient(TestVaultAddr)
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -116,7 +116,7 @@ func TestClient_AuthenticateAppRole_Success(t *testing.T) {
 }
 
 func TestClient_AuthenticateAppRole_MissingCredentials(t *testing.T) {
-	client, err := NewClient("http://localhost:8200")
+	client, err := NewClient(TestVaultAddr)
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -147,7 +147,7 @@ func TestClient_AuthenticateAppRole_MissingCredentials(t *testing.T) {
 }
 
 func TestClient_AuthenticateUnsupportedMethod(t *testing.T) {
-	client, err := NewClient("http://localhost:8200")
+	client, err := NewClient(TestVaultAddr)
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}

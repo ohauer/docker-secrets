@@ -1,4 +1,4 @@
-.PHONY: help all build test fuzz lint clean install-systemd uninstall-systemd test-leaks
+.PHONY: help all build test fuzz lint clean install-systemd uninstall-systemd test-leaks test-integration test-manual test-all
 
 BINARY_NAME=secrets-sync
 BUILD_DIR=bin
@@ -19,6 +19,9 @@ help:
 	@echo "  build-static     - Build static binary for container"
 	@echo "  test             - Run tests"
 	@echo "  test-leaks       - Run tests with goroutine leak detection (Go 1.26+)"
+	@echo "  test-integration - Run automated integration tests (requires Docker)"
+	@echo "  test-manual      - Start manual test environment"
+	@echo "  test-all         - Run all tests (unit + integration)"
 	@echo "  fuzz             - Run fuzz tests (10s per test)"
 	@echo "  coverage         - Generate coverage report"
 	@echo "  lint             - Run linter"
@@ -48,6 +51,19 @@ test:
 test-leaks:
 	@echo "Running tests with goroutine leak detection (Go 1.26+)..."
 	GOEXPERIMENT=goroutineleakprofile $(GO) test -v -race ./...
+
+test-integration:
+	@echo "Running integration tests..."
+	@cd test/integration && ./vault_test.sh
+
+test-manual:
+	@echo "Starting manual test environment..."
+	@echo "1. Start Vault: docker compose -f docker-compose.vault.yml up -d"
+	@echo "2. Setup: cd test/manual && ./setup-vault.sh"
+	@echo "3. Run: cd test/manual && ./run-tool.sh"
+	@echo "4. Verify: cd test/manual && ./verify-secrets.sh"
+
+test-all: test test-integration
 
 fuzz:
 	@echo "Running fuzz tests (10s each)..."

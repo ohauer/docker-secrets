@@ -7,7 +7,7 @@ import (
 )
 
 func TestWithCircuitBreaker(t *testing.T) {
-	client, err := NewClient("http://localhost:8200")
+	client, err := NewClient(TestVaultAddr)
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -31,7 +31,7 @@ func TestWithCircuitBreaker(t *testing.T) {
 }
 
 func TestExecuteWithBreaker_Success(t *testing.T) {
-	client, err := NewClient("http://localhost:8200")
+	client, err := NewClient(TestVaultAddr)
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -58,7 +58,7 @@ func TestExecuteWithBreaker_Success(t *testing.T) {
 }
 
 func TestExecuteWithBreaker_Failure(t *testing.T) {
-	client, err := NewClient("http://localhost:8200")
+	client, err := NewClient(TestVaultAddr)
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -82,7 +82,7 @@ func TestExecuteWithBreaker_Failure(t *testing.T) {
 }
 
 func TestExecuteWithBreaker_OpensAfterFailures(t *testing.T) {
-	client, err := NewClient("http://localhost:8200")
+	client, err := NewClient(TestVaultAddr)
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -121,7 +121,7 @@ func TestExecuteWithBreaker_OpensAfterFailures(t *testing.T) {
 }
 
 func TestExecuteWithBreaker_NoBreaker(t *testing.T) {
-	client, err := NewClient("http://localhost:8200")
+	client, err := NewClient(TestVaultAddr)
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -140,7 +140,7 @@ func TestExecuteWithBreaker_NoBreaker(t *testing.T) {
 }
 
 func TestCircuitBreaker_StateTransitions(t *testing.T) {
-	client, err := NewClient("http://localhost:8200")
+	client, err := NewClient(TestVaultAddr)
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
