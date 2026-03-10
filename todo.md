@@ -3,7 +3,7 @@
 ## Milestone 1: Foundation (Week 1)
 
 - [x] Task 1: Project scaffolding and configuration structures
-  - [x] Initialize Go module with go 1.25.6
+  - [x] Initialize Go module with go 1.26.1
   - [x] Define YAML configuration structures
   - [x] Define environment variable configuration
   - [x] Create project structure (cmd/, internal/, pkg/)
