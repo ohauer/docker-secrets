@@ -207,15 +207,26 @@ func run() error {
 
 	// Create default client to verify connectivity
 	defaultCreds := cfg.SecretStore.GetDefaultCredentials()
-	_, err = clientFactory(defaultCreds)
+	defaultClient, err := clientFactory(defaultCreds)
 	if err != nil {
 		return err
 	}
 
-	logger.Info("authenticated to vault",
+	logFields := []zap.Field{
 		zap.String("address", cfg.SecretStore.Address),
 		zap.String("auth_method", cfg.SecretStore.AuthMethod),
-	)
+	}
+
+	// Query cluster identity for observability
+	if info, infoErr := defaultClient.GetClusterInfo(); infoErr == nil {
+		logFields = append(logFields,
+			zap.String("cluster_name", info.ClusterName),
+			zap.String("vault_version", info.Version),
+			zap.Bool("standby", info.Standby),
+		)
+	}
+
+	logger.Info("authenticated to vault", logFields...)
 
 	// Warn if using HTTP (insecure)
 	if strings.HasPrefix(cfg.SecretStore.Address, "http://") &&
