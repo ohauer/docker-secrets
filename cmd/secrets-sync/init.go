@@ -93,8 +93,8 @@ secrets:
     refreshInterval: "1h"
     template:
       data:
-        username: '{{ .username }}'  # -> /secrets/db-username
-        password: '{{ .password }}'  # -> /secrets/db-password
+        db-username: '{{ .username }}'  # -> /secrets/db-username
+        db-password: '{{ .password }}'  # -> /secrets/db-password
     files:
       - path: "/secrets/db-username"
         mode: "0600"
@@ -109,8 +109,8 @@ secrets:
     refreshInterval: "2h"
     template:
       data:
-        apiKey: '{{ .apiKey }}'       # -> /secrets/api-key
-        apiSecret: '{{ .apiSecret }}' # -> /secrets/api-secret
+        api-key: '{{ .apiKey }}'       # -> /secrets/api-key
+        api-secret: '{{ .apiSecret }}' # -> /secrets/api-secret
     files:
       - path: "/secrets/api-key"
         mode: "0600"

@@ -39,8 +39,8 @@ secrets:
     refreshInterval: "5m"
     template:
       data:
-        username: '{{ .username }}'  # -> .work/secrets/db-username
-        password: '{{ .password }}'  # -> .work/secrets/db-password
+        db-username: '{{ .username }}'  # -> .work/secrets/db-username
+        db-password: '{{ .password }}'  # -> .work/secrets/db-password
     files:
       - path: ".work/secrets/db-username"
         mode: "0600"
@@ -54,8 +54,8 @@ secrets:
     refreshInterval: "1h"
     template:
       data:
-        api_key: '{{ .apiKey }}'       # -> .work/secrets/api-key
-        api_secret: '{{ .apiSecret }}' # -> .work/secrets/api-secret
+        api-key: '{{ .apiKey }}'       # -> .work/secrets/api-key
+        api-secret: '{{ .apiSecret }}' # -> .work/secrets/api-secret
     files:
       - path: ".work/secrets/api-key"
         mode: "0600"

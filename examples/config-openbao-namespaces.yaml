@@ -18,8 +18,8 @@ secrets:
     refreshInterval: "30m"
     template:
       data:
-        api_key: '{{ .apiKey }}'       # -> .work/secrets/team-a-api-key
-        api_secret: '{{ .apiSecret }}' # -> .work/secrets/team-a-api-secret
+        team-a-api-key: '{{ .apiKey }}'       # -> .work/secrets/team-a-api-key
+        team-a-api-secret: '{{ .apiSecret }}' # -> .work/secrets/team-a-api-secret
     files:
       - path: ".work/secrets/team-a-api-key"
         mode: "0600"
@@ -35,8 +35,8 @@ secrets:
     refreshInterval: "30m"
     template:
       data:
-        api_key: '{{ .apiKey }}'       # -> .work/secrets/team-b-api-key
-        api_secret: '{{ .apiSecret }}' # -> .work/secrets/team-b-api-secret
+        team-b-api-key: '{{ .apiKey }}'       # -> .work/secrets/team-b-api-key
+        team-b-api-secret: '{{ .apiSecret }}' # -> .work/secrets/team-b-api-secret
     files:
       - path: ".work/secrets/team-b-api-key"
         mode: "0600"
@@ -52,8 +52,8 @@ secrets:
     refreshInterval: "30m"
     template:
       data:
-        api_key: '{{ .apiKey }}'       # -> .work/secrets/root-api-key
-        api_secret: '{{ .apiSecret }}' # -> .work/secrets/root-api-secret
+        root-api-key: '{{ .apiKey }}'       # -> .work/secrets/root-api-key
+        root-api-secret: '{{ .apiSecret }}' # -> .work/secrets/root-api-secret
     files:
       - path: ".work/secrets/root-api-key"
         mode: "0600"

@@ -24,8 +24,8 @@ secrets:
     refreshInterval: "1m"
     template:
       data:
-        username: '{{ .username }}'
-        password: '{{ .password }}'
+        db-username: '{{ .username }}'
+        db-password: '{{ .password }}'
     files:
       - path: "test-run/secrets/db-username"
         mode: "0600"
@@ -37,8 +37,8 @@ secrets:
     refreshInterval: "2m"
     template:
       data:
-        api_key: '{{ .apiKey }}'
-        api_secret: '{{ .apiSecret }}'
+        api-key: '{{ .apiKey }}'
+        api-secret: '{{ .apiSecret }}'
     files:
       - path: "test-run/secrets/api-key"
         mode: "0600"

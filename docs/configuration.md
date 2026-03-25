@@ -40,9 +40,9 @@ secrets:
         key1: '{{ .field1 }}'
         key2: '{{ .field2 }}'
     files:
-      - path: "/secrets/file1"
+      - path: "/secrets/key1"
         mode: "0644"
-      - path: "/secrets/file2"
+      - path: "/secrets/key2"
         mode: "0600"
 ```
 
@@ -250,26 +250,25 @@ Templates use Go template syntax with secret fields as variables:
 ```yaml
 template:
   data:
-    username: '{{ .username }}'
-    password: '{{ .password }}'
-    connection: 'postgresql://{{ .username }}:{{ .password }}@localhost/db'
+    db-username: '{{ .username }}'
+    db-password: '{{ .password }}'
+    db-connection: 'postgresql://{{ .username }}:{{ .password }}@localhost/db'
 ```
 
-**Important:** The keys in `template.data` are mapped to files **by position**:
-- First key in `template.data` → First file in `files` list
-- Second key in `template.data` → Second file in `files` list
-- And so on...
+**Important:** The keys in `template.data` are mapped to files **by basename** (external-secrets style):
+- Template key must match the basename of the target file path
+- `db-username: '{{ .username }}'` → writes to file with basename `db-username`
 
 Example:
 ```yaml
 template:
   data:
-    username: '{{ .username }}'  # Written to first file
-    password: '{{ .password }}'  # Written to second file
+    db-username: '{{ .username }}'  # Written to /secrets/db-username
+    db-password: '{{ .password }}'  # Written to /secrets/db-password
 files:
-  - path: "/secrets/db-username"  # Receives 'username' value
+  - path: "/secrets/db-username"  # Basename matches template key
     mode: "0600"
-  - path: "/secrets/db-password"  # Receives 'password' value
+  - path: "/secrets/db-password"  # Basename matches template key
     mode: "0600"
 ```
 
