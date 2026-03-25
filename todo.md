@@ -1,4 +1,4 @@
-# Docker Secrets Sidecar - Implementation TODO
+# Secrets Sync - Implementation TODO
 
 ## Milestone 1: Foundation (Week 1)
 

@@ -1,4 +1,4 @@
-# Project Roadmap - Docker Secrets Sidecar
+# Project Roadmap - Secrets Sync
 
 ## ✅ v0.1.0 RELEASED - 2026-02-09
 

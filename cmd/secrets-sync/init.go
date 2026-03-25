@@ -5,7 +5,7 @@ import (
 )
 
 func printInitConfig() {
-	fmt.Print(`# Docker Secrets Sync Configuration
+	fmt.Print(`# Secrets Sync Configuration
 # See https://github.com/ohauer/secrets-sync for full documentation
 
 secretStore:

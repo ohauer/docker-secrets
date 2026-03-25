@@ -1,6 +1,6 @@
-# Contributing to Docker Secrets Sidecar
+# Contributing to Secrets Sync
 
-Thank you for your interest in contributing to Docker Secrets Sidecar! We welcome contributions from the community.
+Thank you for your interest in contributing to Secrets Sync! We welcome contributions from the community.
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@ This project and everyone participating in it is governed by our [Code of Conduc
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/docker-secrets.git`
+2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/secrets-sync.git`
 3. Add upstream remote: `git remote add upstream https://github.com/ohauer/secrets-sync.git`
 4. Create a feature branch: `git checkout -b feature/your-feature-name`
 

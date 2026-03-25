@@ -1,6 +1,6 @@
 # Security Audit Report
 
-## Docker Secrets Sidecar v0.1.0
+## Secrets Sync v0.1.0
 
 **Audit Date**: 2026-02-10 (Updated)
 **Auditor**: Automated Security Review
@@ -325,7 +325,7 @@ None
 
 ## Conclusion
 
-**The Docker Secrets Sidecar codebase is SECURE and follows security best practices.**
+**The secrets-sync codebase is SECURE and follows security best practices.**
 
 - No critical vulnerabilities found
 - No high-risk issues identified

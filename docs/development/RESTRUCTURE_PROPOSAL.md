@@ -10,7 +10,7 @@
 ## Proposed Structure
 
 ```
-docker-secrets/
+secrets-sync/
 ├── cmd/
 │   └── secrets-sync/
 ├── internal/

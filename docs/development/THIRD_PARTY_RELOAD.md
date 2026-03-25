@@ -350,7 +350,7 @@ spec:
 Add optional sidecar image to project:
 
 ```
-docker-secrets/
+secrets-sync/
 ├── Dockerfile              # Main secrets-sync
 ├── Dockerfile.reload       # Reload sidecar
 └── scripts/

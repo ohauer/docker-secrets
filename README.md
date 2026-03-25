@@ -1,4 +1,4 @@
-# Docker Secrets Sidecar
+# Secrets Sync
 
 *A lightweight tool for syncing Vault/OpenBao secrets to the filesystem*
 
@@ -168,7 +168,7 @@ CONFIG_FILE=custom-config.yaml ./secrets-sync validate
 
 #### Convert from external-secrets-operator
 
-Convert ExternalSecret resources to docker-secrets format (supports both YAML and JSON):
+Convert ExternalSecret resources to secrets-sync format (supports both YAML and JSON):
 
 ```bash
 # Basic conversion (uses fallback for unknown fields)

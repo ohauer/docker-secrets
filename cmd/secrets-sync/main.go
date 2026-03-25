@@ -132,7 +132,7 @@ func run() error {
 	// Initialize tracing if enabled
 	var tracingShutdown func()
 	if envCfg.EnableTracing {
-		shutdown, err := tracing.Init("docker-secrets-sync", envCfg.OTELExporterEndpoint)
+		shutdown, err := tracing.Init("secrets-sync", envCfg.OTELExporterEndpoint)
 		if err != nil {
 			logger.Warn("failed to initialize tracing", zap.Error(err))
 		} else {
@@ -409,7 +409,7 @@ func run() error {
 		logger.Warn("failed to cleanup orphaned temp files", zap.Error(err))
 	}
 
-	logger.Info("docker secrets sync running, waiting for shutdown signal")
+	logger.Info("secrets-sync running, waiting for shutdown signal")
 
 	// Wait for signals
 	for {
