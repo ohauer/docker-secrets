@@ -254,6 +254,25 @@ func run() error {
 
 	logger.Info("authenticated to vault", logFields...)
 
+	// Start token renewal for AppRole auth
+	stopRenewal, renewalErr := defaultClient.StartRenewal(func(event string, ttl int) {
+		switch event {
+		case "renewed":
+			logger.Info("vault token renewed", zap.Int("ttl_seconds", ttl))
+		case "re-authenticating":
+			logger.Info("vault token expired, re-authenticating")
+		case "re-authenticated":
+			logger.Info("vault re-authenticated successfully", zap.Int("ttl_seconds", ttl))
+		case "re-auth-failed":
+			logger.Error("vault re-authentication failed")
+		case "expired":
+			logger.Warn("vault token expired and cannot be renewed (static token)")
+		}
+	})
+	if renewalErr != nil {
+		logger.Warn("token renewal not available", zap.Error(renewalErr))
+	}
+
 	// Warn if using HTTP (insecure)
 	if strings.HasPrefix(cfg.SecretStore.Address, "http://") &&
 		!strings.Contains(cfg.SecretStore.Address, "localhost") &&
@@ -378,6 +397,13 @@ func run() error {
 
 	// Set up graceful shutdown
 	shutdownHandler := shutdown.NewHandler(30 * time.Second)
+	if stopRenewal != nil && renewalErr == nil {
+		shutdownHandler.Register(func() error {
+			logger.Info("stopping token renewal")
+			stopRenewal()
+			return nil
+		})
+	}
 	shutdownHandler.Register(func() error {
 		logger.Info("shutting down scheduler")
 		scheduler.Stop()

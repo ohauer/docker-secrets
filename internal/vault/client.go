@@ -25,8 +25,10 @@ type TLSConfig struct {
 
 // Client wraps the Vault API client
 type Client struct {
-	client  *api.Client
-	breaker *gobreaker.CircuitBreaker
+	client     *api.Client
+	breaker    *gobreaker.CircuitBreaker
+	authSecret *api.Secret
+	authConfig *AuthConfig
 }
 
 // NewClient creates a new Vault client
