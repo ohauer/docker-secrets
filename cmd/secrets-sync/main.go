@@ -252,6 +252,10 @@ func run() error {
 		}
 	}
 
+	if ttl := defaultClient.TokenTTL(); ttl > 0 {
+		logFields = append(logFields, zap.Int("token_ttl_seconds", ttl))
+	}
+
 	logger.Info("authenticated to vault", logFields...)
 
 	// Start token renewal for AppRole auth

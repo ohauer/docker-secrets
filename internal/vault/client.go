@@ -131,6 +131,14 @@ func (c *Client) GetClusterInfo() (*ClusterInfo, error) {
 	return info, nil
 }
 
+// TokenTTL returns the current token's TTL in seconds, or 0 if unknown
+func (c *Client) TokenTTL() int {
+	if c.authSecret != nil && c.authSecret.Auth != nil {
+		return c.authSecret.Auth.LeaseDuration
+	}
+	return 0
+}
+
 // limitedTransport wraps http.RoundTripper to limit response body size
 type limitedTransport struct {
 	base     http.RoundTripper
