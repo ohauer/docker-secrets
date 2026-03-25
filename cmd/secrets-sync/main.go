@@ -167,6 +167,9 @@ func run() error {
 		tlsConfig.SkipVerify = true
 	}
 
+	// Track last known leader for failover detection
+	var lastLeader string
+
 	// Create client factory for on-demand client creation
 	clientFactory := func(creds config.CredentialSet) (*vault.Client, error) {
 		client, err := vault.NewClientWithTLS(cfg.SecretStore.Address, tlsConfig)
@@ -187,6 +190,25 @@ func run() error {
 					zap.String("to", to),
 				)
 				metrics.SetCircuitBreakerState("vault-client", to)
+
+				// Log cluster info on circuit breaker recovery
+				if to == "closed" {
+					if info, infoErr := client.GetClusterInfo(); infoErr == nil {
+						fields := []zap.Field{
+							zap.String("cluster_name", info.ClusterName),
+							zap.String("vault_version", info.Version),
+							zap.Bool("standby", info.Standby),
+						}
+						if info.LeaderAddress != "" {
+							fields = append(fields, zap.String("leader_address", info.LeaderAddress))
+							if lastLeader != "" && lastLeader != info.LeaderAddress {
+								fields = append(fields, zap.String("previous_leader", lastLeader))
+							}
+							lastLeader = info.LeaderAddress
+						}
+						logger.Info("vault connection recovered", fields...)
+					}
+				}
 			},
 		)
 
@@ -226,6 +248,7 @@ func run() error {
 		)
 		if info.LeaderAddress != "" {
 			logFields = append(logFields, zap.String("leader_address", info.LeaderAddress))
+			lastLeader = info.LeaderAddress
 		}
 	}
 
