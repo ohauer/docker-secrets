@@ -76,14 +76,14 @@ When the circuit breaker transitions to half-open, the probe should try all conf
 
 ## Acceptance criteria
 
-- [ ] Single address config still works (backward compatible)
+- [x] Single address config still works (backward compatible)
 - [ ] Multiple addresses: failover to next on connection failure
-- [ ] Log cluster_name on connect
-- [ ] Log address switch on failover
+- [x] Log cluster_name on connect
+- [x] Log address switch on failover
 - [ ] Circuit breaker half-open probe tries all addresses
 - [ ] `VAULT_ADDR` env var supports comma-separated list
 - [ ] Unit tests for address rotation logic
-- [ ] Integration test with multi-node cluster
+- [x] Integration test with multi-node cluster
 
 ## Estimated effort
 
