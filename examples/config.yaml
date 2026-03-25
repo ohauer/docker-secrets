@@ -11,10 +11,10 @@ secretStore:
 # 4. namespace - Optional: OpenBao namespace (overrides global namespace)
 # 5. template.data - Map of keys to template expressions
 # 6. files - List of output files
-# The mapping is positional: data keys are written to files in order
-#   - First key in template.data -> First file in files list
-#   - Second key in template.data -> Second file in files list
-#   - etc.
+# Template mapping (external-secrets style):
+#   - Template data key MUST match the basename of the target file path
+#   - Key 'db-username' requires a file with basename 'db-username'
+#   - Mismatched keys will cause an error
 
 secrets:
   - name: "tls-cert"

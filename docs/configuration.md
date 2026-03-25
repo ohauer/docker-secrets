@@ -272,7 +272,7 @@ files:
     mode: "0600"
 ```
 
-The key names in `template.data` are not used for file naming - they're just labels. The actual file paths come from the `files` list.
+The key names in `template.data` MUST match the basename of the corresponding file path. Mismatched keys will cause an error.
 
 ### File Configuration
 

@@ -62,10 +62,10 @@ secretStore:
 #   - Per-secret credentials override default credentials
 #   - If not specified, uses default credentials from secretStore
 #
-# Template mapping:
-#   - First key in template.data -> First file in files list
-#   - Second key in template.data -> Second file in files list
-#   - The key names are just labels; actual file paths come from the files list
+# Template mapping (external-secrets style):
+#   - Template data key MUST match the basename of the target file path
+#   - Key 'db-username' requires a file with basename 'db-username'
+#   - Mismatched keys will cause an error
 
 secrets:
   # Example: TLS certificate from KV v2
