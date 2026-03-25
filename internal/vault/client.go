@@ -102,22 +102,31 @@ func (c *Client) Ping() error {
 
 // ClusterInfo holds identity information about the connected Vault cluster
 type ClusterInfo struct {
-	ClusterName string
-	Version     string
-	Standby     bool
+	ClusterName   string
+	Version       string
+	Standby       bool
+	LeaderAddress string
 }
 
-// GetClusterInfo queries /v1/sys/health to retrieve cluster identity
+// GetClusterInfo queries /v1/sys/health and /v1/sys/leader to retrieve cluster identity
 func (c *Client) GetClusterInfo() (*ClusterInfo, error) {
 	resp, err := c.client.Sys().Health()
 	if err != nil {
 		return nil, fmt.Errorf("failed to query cluster info: %w", err)
 	}
-	return &ClusterInfo{
+	info := &ClusterInfo{
 		ClusterName: resp.ClusterName,
 		Version:     resp.Version,
 		Standby:     resp.Standby,
-	}, nil
+	}
+
+	// Get leader address (unauthenticated endpoint)
+	leader, err := c.client.Sys().Leader()
+	if err == nil && leader != nil {
+		info.LeaderAddress = leader.LeaderAddress
+	}
+
+	return info, nil
 }
 
 // limitedTransport wraps http.RoundTripper to limit response body size

@@ -224,6 +224,9 @@ func run() error {
 			zap.String("vault_version", info.Version),
 			zap.Bool("standby", info.Standby),
 		)
+		if info.LeaderAddress != "" {
+			logFields = append(logFields, zap.String("leader_address", info.LeaderAddress))
+		}
 	}
 
 	logger.Info("authenticated to vault", logFields...)
