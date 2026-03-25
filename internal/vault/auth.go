@@ -58,16 +58,26 @@ func (c *Client) StartRenewal(callback RenewalCallback) (func(), error) {
 		return nil, fmt.Errorf("failed to create token watcher: %w", err)
 	}
 
+	stopped := make(chan struct{})
 	go watcher.Start()
 
 	go func() {
 		for {
 			select {
+			case <-stopped:
+				return
 			case renewal := <-watcher.RenewCh():
 				if renewal != nil && callback != nil {
 					callback("renewed", renewal.Secret.Auth.LeaseDuration)
 				}
 			case <-watcher.DoneCh():
+				// Check if we were stopped intentionally
+				select {
+				case <-stopped:
+					return
+				default:
+				}
+
 				// Token can no longer be renewed, try re-authentication
 				if c.authConfig != nil && c.authConfig.Method == AuthMethodAppRole {
 					if callback != nil {
@@ -105,7 +115,10 @@ func (c *Client) StartRenewal(callback RenewalCallback) (func(), error) {
 		}
 	}()
 
-	return watcher.Stop, nil
+	return func() {
+		close(stopped)
+		watcher.Stop()
+	}, nil
 }
 
 func (c *Client) authenticateToken(token string) error {
