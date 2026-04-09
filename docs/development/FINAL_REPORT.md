@@ -26,7 +26,7 @@ Secrets Sync is a production-ready tool for managing secrets from HashiCorp Vaul
 ## Technical Specifications
 
 ### Architecture
-- **Language**: Go 1.26.1
+- **Language**: Go 1.26.2
 - **Container**: FROM scratch, multi-stage build
 - **Size**: <20MB compressed
 - **User**: UID 65534 (nobody), non-root
@@ -309,7 +309,7 @@ These limitations are by design for the v1.0.0 scope. Future versions may expand
 5. Submit pull request with description
 
 ### Code Standards
-- Go 1.26.1+ required
+- Go 1.26.2+ required
 - Follow Go best practices
 - Write tests for all code
 - Document public APIs

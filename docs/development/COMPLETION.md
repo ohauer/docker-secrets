@@ -17,7 +17,7 @@ A lightweight sidecar container for managing secrets from HashiCorp Vault or Ope
 ## Milestones Completed
 
 ### ✅ Milestone 1: Foundation
-- Project scaffolding with Go 1.26.1
+- Project scaffolding with Go 1.26.2
 - Configuration loader with YAML and environment variables
 - Configuration hot reload with fsnotify
 - Structured JSON logging with zap
