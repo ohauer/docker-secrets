@@ -3,7 +3,7 @@ module github.com/ohauer/secrets-sync
 go 1.26.2
 
 require (
-	github.com/fsnotify/fsnotify v1.9.0
+	github.com/fsnotify/fsnotify v1.10.0
 	github.com/hashicorp/vault/api v1.23.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/sony/gobreaker v1.0.0
