@@ -29,7 +29,7 @@ This project and everyone participating in it is governed by our [Code of Conduc
 
 ### Prerequisites
 
-- Go 1.26.2 or higher
+- Go 1.26.3 or higher
 - Docker and Docker Compose
 - Make
 - golangci-lint (for linting)
